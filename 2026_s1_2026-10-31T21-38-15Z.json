@@ -1,0 +1,161 @@
+{
+  "nodes": [
+    {
+      "id": "group-s1-20261031-2026",
+      "type": "group",
+      "data": { "label": "S1 — Product Shape" },
+      "position": { "x": 120, "y": 1900 },
+      "width": 1600,
+      "height": 1200,
+      "style": { "width": 1600, "height": 1200, "zIndex": -1 }
+    },
+    {
+      "id": "s1-stage-1",
+      "type": "s1-stage",
+      "data": {
+        "label": "Product Shape",
+        "description": "شكل منتج 2026 — من الحسبة الذهنية المبعثرة إلى لوحة مالية صافية واحدة",
+        "points": [
+          "منتج: مساعد مالي لمشغل الورشة يوحّد الرصيد والالتزامات والمشتريات على الدَّين",
+          "الرؤية: صفحة واحدة تُظهر الصافي الحقيقي لحظياً قبل أي قرار شراء أو سداد",
+          "MVP المقترح: F-1 حتى F-5 (راجع PRD §6 — قرار الإنسان)",
+          "الفرق عن الوضع الحالي: ذاكرة رأس ودفاتر مبعثرة ← أرقام محسوبة ومرتبطة بمصدرها"
+        ]
+      },
+      "position": { "x": 40, "y": 80 },
+      "width": 360,
+      "height": 260,
+      "parentId": "group-s1-20261031-2026",
+      "extent": "parent"
+    },
+    {
+      "id": "s1-insight-2",
+      "type": "s1-product-insight-node",
+      "data": {
+        "label": "Product Insight",
+        "description": "المستخدم الحاسم ومحرك السلوك",
+        "points": [
+          "المستخدم الحاسم: مشغل الورشة — يفتح المنتج صباحاً وقبل كل سداد أو شراء",
+          "قيد سلوكي U-1/U-3: إن لم يظهر الرصيد خلال ثوانٍ قليلة يعود للحسبة الذهنية ويترك المنتج",
+          "الثقة قبل الميزات: كل رقم معروض يجب أن يُتتبع إلى قيده الأصلي (K-1)"
+        ]
+      },
+      "position": { "x": 460, "y": 80 },
+      "width": 360,
+      "height": 260,
+      "parentId": "group-s1-20261031-2026",
+      "extent": "parent"
+    },
+    {
+      "id": "s1-personas-3",
+      "type": "s1-actors-node",
+      "data": {
+        "label": "User Personas",
+        "description": "من يستخدم المنتج وكيف يتدفق يومه",
+        "points": [
+          "مشغل الورشة: يفتح اللوحة ← يُدخل دين مواد من التاجر ← يرى الصافي قبل قرار الشراء",
+          "العامل/العاملة: ينهي يوم العمل ← يسأل عن مستحقاته ← يرى الشهر محسوباً بالنسب المتفق عليها",
+          "الشريك/الدائن: يسأل ماذا جرى ← يرى السجل المرتبط ← يثق أو يرفع الضغط (سياق ثقة K-2)"
+        ]
+      },
+      "position": { "x": 880, "y": 80 },
+      "width": 360,
+      "height": 260,
+      "parentId": "group-s1-20261031-2026",
+      "extent": "parent"
+    },
+    {
+      "id": "s1-modules-4",
+      "type": "s1-modules-node",
+      "data": {
+        "label": "Feature Modules",
+        "description": "الوحدات بنفس ترتيب F-N في الـ PRD",
+        "points": [
+          "F-1 لوحة الصافي الحقيقي — تتيح رؤية الرصيد لحظياً (P-1, SC-1)",
+          "F-2 سجل الالتزامات والديون — تتيح إدخال كل دين ومصدره (P-2, SC-2)",
+          "F-3 مشتريات المواد على الدَّين — تتيح قيد مشتريات بتاجر وموعد استحقاق (P-1, P-2)",
+          "F-4 سجل السدادات — تتيح تسجيل دفعة وربطها بالتزامها (SC-2, SC-4)",
+          "F-5 حسم الصافي قبل نسب العاملات — تتيح فصل تكلفة المواد قبل توزيع الأرباح (P-3, SC-3)",
+          "F-6 مساعد قرار الشراء — تتيح تنبيهاً: دين أم لا؟ (P-2, SC-4) — مقترح خارج MVP"
+        ]
+      },
+      "position": { "x": 40, "y": 420 },
+      "width": 360,
+      "height": 260,
+      "parentId": "group-s1-20261031-2026",
+      "extent": "parent"
+    },
+    {
+      "id": "s1-procedures-5",
+      "type": "s1-procedures-node",
+      "data": {
+        "label": "User Procedures",
+        "description": "السلسلة اليومية من فتح اللوحة إلى قرار السداد",
+        "points": [
+          "1. يفتح المشغل اللوحة ← F-1 يعرض الصافي الحقيقي فوراً",
+          "2. يُدخل دين مواد من التاجر ← F-3 ينشئ التزاماً في F-2",
+          "3. عند ورود مبلغ ← يسجّل سداداً في F-4 مرتبطاً بالالتزام",
+          "4. نهاية الشهر ← F-5 يحسم الصافي قبل نسب العاملات",
+          "5. قبل شراء كبير ← F-6 (إن اعتُمد) يعرض الأثر على الصافي",
+          "قاعدة: لا رصيد يُعرض دون إمكانية تتبّع قيده المصدر (BR-1)"
+        ]
+      },
+      "position": { "x": 460, "y": 420 },
+      "width": 360,
+      "height": 300,
+      "parentId": "group-s1-20261031-2026",
+      "extent": "parent"
+    },
+    {
+      "id": "s1-boundary-6",
+      "type": "s1-boundary-node",
+      "data": {
+        "label": "MVP Boundary",
+        "description": "اقتراح الموديل — الباب النهائي قرار الإنسان",
+        "points": [
+          "✅ MVP المقترح: F-1، F-2، F-3، F-4، F-5 — لحظة القيمة: صافي حقيقي قبل قرار الشراء",
+          "❌ خارج المقترح: F-6 (إصدار لاحق)، تقارير PDF، تعدد مستخدمين بصلاحيات، تكامل بنوك",
+          "سبب التشذيب: K-5 و NG-2 — التركيز على اليوم الأول الملموس دون بنية مستقبل"
+        ]
+      },
+      "position": { "x": 880, "y": 420 },
+      "width": 360,
+      "height": 300,
+      "parentId": "group-s1-20261031-2026",
+      "extent": "parent"
+    },
+    {
+      "id": "s1-gate-7",
+      "type": "gate-product",
+      "data": {
+        "label": "Product Gate ⛔",
+        "description": "بوابة شكل المنتج — يجب موافقة إنسان على حدود المنتج",
+        "gateStatus": "pending",
+        "decisionAuthority": "Human",
+        "gateChecklist": [
+          "رؤية المنتج واضحة ومحددة",
+          "User Personas معرّفين بسلوكياتهم",
+          "Feature Modules محددة ومتوافقة مع الأهداف",
+          "User Procedures واضحة ومتسلسلة",
+          "MVP Boundary محدد — فيه in و out صريح"
+        ]
+      },
+      "position": { "x": 400, "y": 820 },
+      "width": 600,
+      "height": 200,
+      "parentId": "group-s1-20261031-2026",
+      "extent": "parent"
+    }
+  ],
+  "edges": [
+    { "id": "e-s1-stage-insight", "type": "custom", "source": "s1-stage-1", "target": "s1-insight-2" },
+    { "id": "e-s1-insight-personas", "type": "custom", "source": "s1-insight-2", "target": "s1-personas-3" },
+    { "id": "e-s1-stage-modules", "type": "custom", "source": "s1-stage-1", "target": "s1-modules-4" },
+    { "id": "e-s1-modules-procedures", "type": "custom", "source": "s1-modules-4", "target": "s1-procedures-5" },
+    { "id": "e-s1-personas-boundary", "type": "custom", "source": "s1-personas-3", "target": "s1-boundary-6" },
+    { "id": "e-s1-procedures-gate", "type": "custom", "source": "s1-procedures-5", "target": "s1-gate-7" },
+    { "id": "e-s1-boundary-gate", "type": "custom", "source": "s1-boundary-6", "target": "s1-gate-7" }
+  ],
+  "evidence": [],
+  "exportedAt": "2026-10-31T21:38:15.000Z"
+}
