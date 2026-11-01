@@ -1,0 +1,175 @@
+{
+  "nodes": [
+    {
+      "id": "group-s2-20261101-2026",
+      "type": "group",
+      "data": { "label": "S2 — Architecture" },
+      "position": { "x": 120, "y": 3300 },
+      "width": 1600,
+      "height": 1200,
+      "style": { "width": 1600, "height": 1200, "zIndex": -1 }
+    },
+    {
+      "id": "s2-stage-1",
+      "type": "s2-stage",
+      "data": {
+        "label": "Architecture Spine",
+        "description": "مساعد مالي محلي أحادي الجهاز — بلا خادم؛ كل رقم يُشتق من سجل قيود append-only",
+        "points": [
+          "نوع التطبيق: تطبيق ويب أحادي الصفحة يعمل على جهاز واحد بدون backend (سياج MVP: لا تعدد مستخدمين)",
+          "التقنية المقترحة: React + TypeScript مع localStorage عبر طبقة Store واحدة — [افتراض] قرار تفضيلي يُعتمد عند الـ Gate (ADR-1)",
+          "الطبقات: UI (5 مكوّنات عرض/إدخال) ← Logic (NetEngine) ← Data (Store + ExcelImporter)",
+          "مصدر الحقيقة الوحيد: سجل قيود append-only — لا رقم محسوب يُخزن أبداً (BR-1, ADR-2)",
+          "يومية الإكسل تبقى مصدر التسجيل اليومي وتُستورد إلى المنتج ولا تُستبدل (K-3, ADR-3)"
+        ]
+      },
+      "position": { "x": 40, "y": 80 },
+      "width": 360,
+      "height": 260,
+      "parentId": "group-s2-20261101-2026",
+      "extent": "parent"
+    },
+    {
+      "id": "s2-domains-2",
+      "type": "s2-domains-node",
+      "data": {
+        "label": "Domain Model",
+        "description": "6 كيانات تغطي F-1 حتى F-5 — بلا مخزون وبلا محاسبة مضاعفة (U-4, NG-1)",
+        "points": [
+          "Commitment { id, counterparty, origin: credit_purchase|external|worker_accrual, amount, dueDate|null, createdAt, note } — التزام لجهة؛ وحدة الديون الوحيدة",
+          "CreditPurchase { id, date, supplier, items[], amount, dueDate|null, commitmentId } — مشتريات على الدَّين تولّد التزاماً بنفس المبلغ (BR-2)",
+          "Payment { id, date, commitmentId, amount, note } — سداد مرتبط بالتزام واحد حصراً (BR-3)",
+          "CashEntry { id, date, direction: in|out, amount, source: excel_import|manual } — حركة نقد من يومية الإكسل أو إدخال يدوي (K-3)",
+          "Worker { id, name, ratioPercent } — عامل/عاملة بنسبة متفق عليها تُعرض ولا تُعدّل (BR-5, K-4)",
+          "MonthSettlement { month, revenueTotal, materialCost, netBeforeRatios, allocations[], closedAt } — لقطة حسم مغلقة غير قابلة للتعديل (BR-6)"
+        ]
+      },
+      "position": { "x": 460, "y": 80 },
+      "width": 360,
+      "height": 260,
+      "parentId": "group-s2-20261101-2026",
+      "extent": "parent"
+    },
+    {
+      "id": "s2-components-3",
+      "type": "s2-components-node",
+      "data": {
+        "label": "System Components",
+        "description": "8 مكونات رسمية — أسماؤها ملزمة في كل ملفات S2",
+        "points": [
+          "DashboardPanel (UI): لوحة الصافي الحقيقي — الرقم الوحيد لحظياً (F-1)",
+          "CommitmentsLedger (UI): سجل الالتزامات + السدادات المرتبطة + تصنيف «بلا استحقاق» منفصل (F-2, F-4, HR-2)",
+          "PurchaseForm (UI): إدخال مشتريات على الدَّين بتاجر ومبلغ واستحقاق اختياري (F-3)",
+          "SettlementBoard (UI): حسم الشهر — صافٍ قبل النسب ثم النسب المعروضة كما هي (F-5)",
+          "SourceViewer (UI): عرض قيد مصدر أي رقم بلمسة واحدة (HR-1)",
+          "NetEngine (Logic): الصافي = نقد − Σ التزامات؛ يُعيد الحساب عند كل قيد (U-1)",
+          "Store (Data): تخزين محلي append-only بمفاتيح 2026:* — البوابة الوحيدة للبيانات",
+          "ExcelImporter (Data): استيراد حركة النقد من يومية الإكسل دون استبدالها (K-3)"
+        ]
+      },
+      "position": { "x": 880, "y": 80 },
+      "width": 360,
+      "height": 300,
+      "parentId": "group-s2-20261101-2026",
+      "extent": "parent"
+    },
+    {
+      "id": "s2-interactions-4",
+      "type": "s2-interactions-node",
+      "data": {
+        "label": "Component Interactions",
+        "description": "تدفق البيانات من المصدر إلى العرض — كل سهم له عقد في API Contract",
+        "points": [
+          "ExcelImporter ← Store: قيود CashEntry مستوردة بعلامة excel_import (C-6, K-3)",
+          "PurchaseForm ← Store: CreditPurchase + Commitment جديد بعد فحص HR-2/HR-7 (C-1)",
+          "CommitmentsLedger ← Store: Payment مرتبط بالتزام (C-3)؛ رفض عند تجاوز المتبقي (HR-3, HR-4)",
+          "Store ← NetEngine: كل قيد جديد يستدعي إعادة حساب الصافي فوراً (U-1)",
+          "NetEngine ← DashboardPanel: { net, cash, totalCommitments } كل رقم مع ref قيده (C-4, HR-1)",
+          "CommitmentsLedger ← SourceViewer: طلب عرض قيد مصدر أي التزام أو سداد (C-7)",
+          "SettlementBoard ← NetEngine + Store: صافٍ قبل النسب ← لقطة MonthSettlement مغلقة + التزامات worker_accrual (C-5, HR-6)"
+        ]
+      },
+      "position": { "x": 40, "y": 420 },
+      "width": 380,
+      "height": 300,
+      "parentId": "group-s2-20261101-2026",
+      "extent": "parent"
+    },
+    {
+      "id": "s2-data-5",
+      "type": "s2-data-domains-node",
+      "data": {
+        "label": "Data Domains",
+        "description": "تخزين محلي append-only — الأرقام المحسوبة لا تُخزن مطلقاً",
+        "points": [
+          "Storage: localStorage — بلا خادم ولا قاعدة بيانات خارجية (ADR-1) [افتراض]",
+          "Format: JSON strings لكل سجل؛ settlements لقطات مغلقة غير قابلة للتعديل (BR-6)",
+          "Key Pattern: 2026:{collection}:{id} — collections: cash_entries, credit_purchases, commitments, payments, workers, settlements",
+          "Operations: append-only للقيود؛ حذف التزام مسموح فقط قبل أول سداد مرتبط (يحمي HR-3/HR-4)",
+          "Constraint: لا تُخزن أرقام محسوبة — الصافي يُشتق دائماً من القيود عبر NetEngine (BR-1, ADR-2)"
+        ]
+      },
+      "position": { "x": 480, "y": 420 },
+      "width": 360,
+      "height": 300,
+      "parentId": "group-s2-20261101-2026",
+      "extent": "parent"
+    },
+    {
+      "id": "s2-constraints-6",
+      "type": "s2-constraints-node",
+      "data": {
+        "label": "Tech Constraints",
+        "description": "قواعد صارمة قابلة للفحص نعم/لا — بنفس ترتيب الـ Skill",
+        "points": [
+          "HR-1: كل رقم معروض يفتح قيد مصدره بلمسة واحدة (BR-1, K-1)",
+          "HR-2: كل مشتريات الدَّين تتطلب تاجراً ومبلغاً؛ بلا استحقاق = وسم وتصنيف منفصل (BR-2)",
+          "HR-3: لا يُقبل سداد بلا التزام مرتبط به (BR-3)",
+          "HR-4: سداد أكبر من المتبقي مرفوض مع اقتراح بديل واضح (BR-4)",
+          "HR-5: نسب العاملات تُعرض كما هي المتفق عليها ولا يعدّلها النظام (BR-5, K-4)",
+          "HR-6: الحسم يعمل على قيود فترته فقط؛ الشهر المغلق لا يُعاد حسابه (BR-6)",
+          "HR-7: مبلغ صفر أو سالب مرفوض برسالة واضحة (BR-2)",
+          "لا ميزات مستقبلية: لا PDF، لا تعدد مستخدمين، لا تكامل بنوك، لا F-6 (سياج MVP)"
+        ]
+      },
+      "position": { "x": 900, "y": 420 },
+      "width": 360,
+      "height": 260,
+      "parentId": "group-s2-20261101-2026",
+      "extent": "parent"
+    },
+    {
+      "id": "s2-gate-7",
+      "type": "gate-architecture",
+      "data": {
+        "label": "Architecture Gate ⛔",
+        "description": "بوابة المعمارية — يجب موافقة إنسان على القرارات التقنية",
+        "gateStatus": "pending",
+        "decisionAuthority": "Human",
+        "gateChecklist": [
+          "Domain Model واضح ومتوافق مع PD/S0",
+          "Components محددة بمسؤولياتها",
+          "Interactions واضحة — كل سهم له معنى",
+          "Data Model يدعم كل الـ use cases من S1",
+          "Tech Constraints متوافقة مع القيود من PD"
+        ]
+      },
+      "position": { "x": 400, "y": 820 },
+      "width": 600,
+      "height": 200,
+      "parentId": "group-s2-20261101-2026",
+      "extent": "parent"
+    }
+  ],
+  "edges": [
+    { "id": "e-s2-stage-domains", "type": "custom", "source": "s2-stage-1", "target": "s2-domains-2" },
+    { "id": "e-s2-domains-components", "type": "custom", "source": "s2-domains-2", "target": "s2-components-3" },
+    { "id": "e-s2-components-interactions", "type": "custom", "source": "s2-components-3", "target": "s2-interactions-4" },
+    { "id": "e-s2-stage-data", "type": "custom", "source": "s2-stage-1", "target": "s2-data-5" },
+    { "id": "e-s2-data-constraints", "type": "custom", "source": "s2-data-5", "target": "s2-constraints-6" },
+    { "id": "e-s2-interactions-gate", "type": "custom", "source": "s2-interactions-4", "target": "s2-gate-7" },
+    { "id": "e-s2-constraints-gate", "type": "custom", "source": "s2-constraints-6", "target": "s2-gate-7" }
+  ],
+  "evidence": [],
+  "exportedAt": "2026-11-01T12:02:23.000Z"
+}
