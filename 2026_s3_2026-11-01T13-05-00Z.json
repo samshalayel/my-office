@@ -1,0 +1,380 @@
+{
+  "nodes": [
+    {
+      "id": "group-s3-20261101-2026",
+      "type": "group",
+      "data": { "label": "S3 — Slices & Tasks" },
+      "position": { "x": 120, "y": 4600 },
+      "width": 1800,
+      "height": 1560,
+      "style": { "width": 1800, "height": 1560, "zIndex": -1 }
+    },
+    {
+      "id": "s3-stage-1",
+      "type": "s3-stage",
+      "data": {
+        "label": "Slice Strategy",
+        "description": "قرار: تقسيم متعدد الشرائح — 8 مكونات تنقسم لوحدات عمل مستقلة قابلة للتسليم end-to-end",
+        "points": [
+          "القالب: Multi-Slice — المكونات الثمانية تنتج قيمة قابلة للاختبار لكل شريحة على حدة (قرار موثق في Playbook §1)",
+          "Foundation = core (Store + NetEngine): كل شريحة لاحقة تعتمد على طبقة البيانات والحساب",
+          "المفتاح المشترك بين الشرائح: مفاتيح التخزين 2026:* — كل شريحة تكتب/تقرأ عبر Store حصراً",
+          "4 شرائح: core → (entry ∥ view) → verify — لا تبعيات دائرية",
+          "بوابة واحدة s3-gate-7 تغطي كل الشرائح — المهام الحرجة معلّمة 👤 (core-T2, entry-T3, verify-T1)"
+        ]
+      },
+      "position": { "x": 40, "y": 80 },
+      "width": 360,
+      "height": 240,
+      "parentId": "group-s3-20261101-2026",
+      "extent": "parent"
+    },
+    {
+      "id": "s3-slice-core",
+      "type": "s3-slice",
+      "data": {
+        "label": "Slice: core (Foundation)",
+        "description": "طبقة البيانات والحساب — أساس كل ما بعدها",
+        "points": [
+          "يعتمد على: — (Foundation)",
+          "المكونات: Store (Data) + NetEngine (Logic)",
+          "العقود: C-4 calculateNetPosition",
+          "المبدأ: append-only — لا رقم محسوب يُخزن أبداً (ADR-2, BR-1)",
+          "تسليم الشريحة: يمكن إنشاء التزامات برمجياً وحساب صافٍ صحيح بلا أي UI"
+        ]
+      },
+      "position": { "x": 40, "y": 400 },
+      "width": 360,
+      "height": 240,
+      "parentId": "group-s3-20261101-2026",
+      "extent": "parent"
+    },
+    {
+      "id": "s3-contract-core",
+      "type": "s3-contract",
+      "data": {
+        "label": "Contracts: core",
+        "description": "العقود المنفَّذة في شريحة core",
+        "points": [
+          "C-4: calculateNetPosition() → NetPosition — منسوخ حرفياً من S2 Contract",
+          "الطبقة: Logic (NetEngine) — قراءة من Store فقط، لا يكتب ولا يخزن",
+          "حالات الحافة: قيود صفرية، التزامات بلا استحقاق تُحتسب ضمن المجموع، مصادر نقد متعددة",
+          "مثال: نقد 3500 + 800 مستورد، التزامات 1200 + 5000 → net = 4300 − 6200 = −1900"
+        ]
+      },
+      "position": { "x": 40, "y": 700 },
+      "width": 360,
+      "height": 260,
+      "parentId": "group-s3-20261101-2026",
+      "extent": "parent"
+    },
+    {
+      "id": "s3-data-core",
+      "type": "s3-data",
+      "data": {
+        "label": "Data: core",
+        "description": "نمط التخزين الأساسي الذي تبني عليه كل الشرائح",
+        "points": [
+          "نمط المفاتيح: 2026:commitments, 2026:payments, 2026:cash_entries, 2026:workers, 2026:settlements",
+          "الصيغة: JSON لكل سجل مع id فريد؛ الإلحاق فقط — لا تعديل ولا حذف لسجل مقيد",
+          "العمليات المسموحة: appendRecord, readAll, readById — عبر Store حصراً"
+        ]
+      },
+      "position": { "x": 40, "y": 1020 },
+      "width": 360,
+      "height": 240,
+      "parentId": "group-s3-20261101-2026",
+      "extent": "parent"
+    },
+    {
+      "id": "s3-tasks-core",
+      "type": "s3-tasks",
+      "data": {
+        "label": "Tasks: core",
+        "description": "3 مهام — نفس الأسماء والترتيب في CSV",
+        "points": [
+          "[core-T1] بناء Store بسجل قيود append-only بمفاتيح 2026:*",
+          "[core-T2] 👤 تنفيذ C-4 calculateNetPosition في NetEngine",
+          "[core-T3] اختبارات حساب الصافي على حالات الحافة"
+        ]
+      },
+      "position": { "x": 40, "y": 1320 },
+      "width": 360,
+      "height": 200,
+      "parentId": "group-s3-20261101-2026",
+      "extent": "parent"
+    },
+    {
+      "id": "s3-slice-entry",
+      "type": "s3-slice",
+      "data": {
+        "label": "Slice: entry",
+        "description": "إدخال البيانات: مشتريات، التزامات، سدادات، استيراد النقد",
+        "points": [
+          "يعتمد على: core",
+          "المكونات: PurchaseForm (UI) + CommitmentsLedger (UI) + ExcelImporter (Data)",
+          "العقود: C-1, C-2, C-3, C-5",
+          "التزام قواعد الإدخال: HR-2 (تاجر ومبلغ إلزاميان), HR-3, HR-4, HR-7",
+          "الإكسل يُستورد ولا يُستبدل (K-3, ADR-3) — ⚠ قرار ADR-3 معتمد من الإنسان"
+        ]
+      },
+      "position": { "x": 460, "y": 400 },
+      "width": 360,
+      "height": 240,
+      "parentId": "group-s3-20261101-2026",
+      "extent": "parent"
+    },
+    {
+      "id": "s3-contract-entry",
+      "type": "s3-contract",
+      "data": {
+        "label": "Contracts: entry",
+        "description": "العقود المنفَّذة في شريحة entry",
+        "points": [
+          "C-1: addCreditPurchase — تاجر ومبلغ إلزاميان، بلا استحقاق = وسم (HR-2, HR-7)",
+          "C-2: addExternalCommitment — قيد دين قائم (HR-7)",
+          "C-3: recordPayment — سداد ≤ المتبقي وإلا فشل برسالة المتبقي (HR-3, HR-4)",
+          "C-5: importCashEntries — إلحاق حركات نقد دون استبدال البيانات (K-3)"
+        ]
+      },
+      "position": { "x": 460, "y": 700 },
+      "width": 360,
+      "height": 260,
+      "parentId": "group-s3-20261101-2026",
+      "extent": "parent"
+    },
+    {
+      "id": "s3-data-entry",
+      "type": "s3-data",
+      "data": {
+        "label": "Data: entry",
+        "description": "بيانات الإدخال: مشتريات، التزامات، سدادات، نقد",
+        "points": [
+          "2026:commitments — كل التزام origin: credit_purchase|external|worker_accrual (HR-7)",
+          "2026:payments — مرتبط بـ commitmentId واحد حصراً؛ غير قابل للتعديل بعد التسجيل",
+          "2026:cash_entries — source: excel_import|manual؛ الاستيراد يلحق ولا يستبدل",
+          "2026:purchases — كل مشتريات تولّد التزاماً بنفس المبلغ عبر commitmentId (BR-2)"
+        ]
+      },
+      "position": { "x": 460, "y": 1020 },
+      "width": 360,
+      "height": 240,
+      "parentId": "group-s3-20261101-2026",
+      "extent": "parent"
+    },
+    {
+      "id": "s3-tasks-entry",
+      "type": "s3-tasks",
+      "data": {
+        "label": "Tasks: entry",
+        "description": "4 مهام — نفس الأسماء والترتيب في CSV",
+        "points": [
+          "[entry-T1] PurchaseForm يضيف مشتريات على الدَّين عبر C-1",
+          "[entry-T2] CommitmentsLedger يضيف التزامات خارجية ويسجل السداد عبر C-2 وC-3",
+          "[entry-T3] 👤 ExcelImporter يستورد حركة النقد من الإكسل عبر C-5",
+          "[entry-T4] تصنيف «بلا استحقاق» في سجل الالتزامات"
+        ]
+      },
+      "position": { "x": 460, "y": 1320 },
+      "width": 360,
+      "height": 200,
+      "parentId": "group-s3-20261101-2026",
+      "extent": "parent"
+    },
+    {
+      "id": "s3-slice-view",
+      "type": "s3-slice",
+      "data": {
+        "label": "Slice: view",
+        "description": "العرض: الصافي لحظياً، حسم الشهر، قيد المصدر",
+        "points": [
+          "يعتمد على: core",
+          "المكونات: DashboardPanel (UI) + SettlementBoard (UI) + SourceViewer (UI)",
+          "العقود: C-6, C-7",
+          "DashboardPanel يعرض مخرجات NetEngine فقط — لا يحسب بنفسه",
+          "SourceViewer يحقق HR-1: كل رقم يفتح قيد مصدره بلمسة واحدة"
+        ]
+      },
+      "position": { "x": 880, "y": 400 },
+      "width": 360,
+      "height": 240,
+      "parentId": "group-s3-20261101-2026",
+      "extent": "parent"
+    },
+    {
+      "id": "s3-contract-view",
+      "type": "s3-contract",
+      "data": {
+        "label": "Contracts: view",
+        "description": "العقود المنفَّذة في شريحة view",
+        "points": [
+          "C-6: closeMonth — لقطة حسم مغلقة: شهر واحد = لقطة واحدة، لا تعديل بعد الإغلاق (HR-5, HR-6)",
+          "C-7: openSource — إرجاع القيد المصدر لأي رقم معروض (HR-1, BR-1)",
+          "مستحقات العاملات تنشأ كالتزامات worker_accrual عند الحسم فقط (ADR-4)"
+        ]
+      },
+      "position": { "x": 880, "y": 700 },
+      "width": 360,
+      "height": 240,
+      "parentId": "group-s3-20261101-2026",
+      "extent": "parent"
+    },
+    {
+      "id": "s3-data-view",
+      "type": "s3-data",
+      "data": {
+        "label": "Data: view",
+        "description": "بيانات العرض: لقطات الحسم والاشتقاق الحي",
+        "points": [
+          "2026:settlements — لقطة MonthSettlement مغلقة بلا تعديل (HR-6)",
+          "الصافي يُشتق لحظياً من 2026:cash_entries و2026:commitments — لا يُخزن أبداً (ADR-2)",
+          "النسب تُقرأ من 2026:workers وتُعرض كما هي بلا تعديل (HR-5, K-4)"
+        ]
+      },
+      "position": { "x": 880, "y": 1000 },
+      "width": 360,
+      "height": 240,
+      "parentId": "group-s3-20261101-2026",
+      "extent": "parent"
+    },
+    {
+      "id": "s3-tasks-view",
+      "type": "s3-tasks",
+      "data": {
+        "label": "Tasks: view",
+        "description": "3 مهام — نفس الأسماء والترتيب في CSV",
+        "points": [
+          "[view-T1] DashboardPanel يعرض الصافي لحظياً",
+          "[view-T2] SettlementBoard يشغّل حسم الشهر عبر C-6",
+          "[view-T3] SourceViewer يفتح قيد مصدر أي رقم عبر C-7"
+        ]
+      },
+      "position": { "x": 880, "y": 1300 },
+      "width": 360,
+      "height": 200,
+      "parentId": "group-s3-20261101-2026",
+      "extent": "parent"
+    },
+    {
+      "id": "s3-slice-verify",
+      "type": "s3-slice",
+      "data": {
+        "label": "Slice: verify",
+        "description": "تغطية القواعد الصارمة والتدفقات قبل التسليم",
+        "points": [
+          "يعتمد على: entry, view",
+          "النطاق: تغطية HR-1 حتى HR-7 باختبارات + تدفقات UF-1 حتى UF-3 end-to-end",
+          "أي فشل هنا يعيد الشريحة المصدر — لا إصلاحات داخل verify نفسها",
+          "كل مهمة في هذه الشريحة تسبق Slice Gate النهائي"
+        ]
+      },
+      "position": { "x": 1300, "y": 400 },
+      "width": 360,
+      "height": 240,
+      "parentId": "group-s3-20261101-2026",
+      "extent": "parent"
+    },
+    {
+      "id": "s3-contract-verify",
+      "type": "s3-contract",
+      "data": {
+        "label": "Contracts: verify",
+        "description": "ما تتحقق منه الشريحة — بلا عقود جديدة",
+        "points": [
+          "لا عقود داخلية جديدة — تختبر العقود C-1 حتى C-7 كما هي",
+          "حالات الحافة الموثقة في S3 Contract لكل عقد تتحول إلى اختبارات T-C-N في S5",
+          "أي توقيع يحتاج تغييراً أثناء التحقق → توقف وارفعه كـ DEV-N للإنسان"
+        ]
+      },
+      "position": { "x": 1300, "y": 700 },
+      "width": 360,
+      "height": 220,
+      "parentId": "group-s3-20261101-2026",
+      "extent": "parent"
+    },
+    {
+      "id": "s3-data-verify",
+      "type": "s3-data",
+      "data": {
+        "label": "Data: verify",
+        "description": "بيانات الاختبار — بلا مخاطر على البيانات الحقيقية",
+        "points": [
+          "بيانات اختبار مركّبة فقط — ممنوع لمس بيانات حقيقية قبل نقطة التوقف الإلزامية (Playbook §4)",
+          "سيناريوهات: التزام بلا استحقاق، سداد يتجاوز المتبقي، حسم شهر مُغلق مسبقاً"
+        ]
+      },
+      "position": { "x": 1300, "y": 980 },
+      "width": 360,
+      "height": 220,
+      "parentId": "group-s3-20261101-2026",
+      "extent": "parent"
+    },
+    {
+      "id": "s3-tasks-verify",
+      "type": "s3-tasks",
+      "data": {
+        "label": "Tasks: verify",
+        "description": "مهمتان — نفس الأسماء والترتيب في CSV",
+        "points": [
+          "[verify-T1] 👤 مراجعة تغطية HR-1 حتى HR-7 باختبارات",
+          "[verify-T2] اختبار تدفقات UF-1 حتى UF-3 من البداية للنهاية"
+        ]
+      },
+      "position": { "x": 1300, "y": 1260 },
+      "width": 360,
+      "height": 200,
+      "parentId": "group-s3-20261101-2026",
+      "extent": "parent"
+    },
+    {
+      "id": "s3-gate-7",
+      "type": "gate-slices",
+      "data": {
+        "label": "Slice Gate ⛔",
+        "description": "بوابة الشرائح — موافقة إنسان على التقسيم والخطة قبل بدء التنفيذ في S4",
+        "gateStatus": "pending",
+        "decisionAuthority": "Human+AI",
+        "gateChecklist": [
+          "كل شريحة تُسلَّم end-to-end وتُختبر منفصلة",
+          "كل عقود S2 داخل MVP مغطاة بمهمة واحدة على الأقل",
+          "التبعيات بين الشرائح واضحة وبلا دورات",
+          "المهام الحرجة 👤 محددة ولها نقاط توقف",
+          "ترتيب البناء معلن ومقبول للإنسان"
+        ]
+      },
+      "position": { "x": 600, "y": 1620 },
+      "width": 600,
+      "height": 220,
+      "parentId": "group-s3-20261101-2026",
+      "extent": "parent"
+    }
+  ],
+  "edges": [
+    { "id": "e-s3-stage-core", "type": "custom", "source": "s3-stage-1", "target": "s3-slice-core" },
+    { "id": "e-s3-stage-entry", "type": "custom", "source": "s3-stage-1", "target": "s3-slice-entry" },
+    { "id": "e-s3-stage-view", "type": "custom", "source": "s3-stage-1", "target": "s3-slice-view" },
+    { "id": "e-s3-stage-verify", "type": "custom", "source": "s3-stage-1", "target": "s3-slice-verify" },
+    { "id": "e-s3-core-contract", "type": "custom", "source": "s3-slice-core", "target": "s3-contract-core" },
+    { "id": "e-s3-core-data", "type": "custom", "source": "s3-slice-core", "target": "s3-data-core" },
+    { "id": "e-s3-core-tasks", "type": "custom", "source": "s3-slice-core", "target": "s3-tasks-core" },
+    { "id": "e-s3-entry-contract", "type": "custom", "source": "s3-slice-entry", "target": "s3-contract-entry" },
+    { "id": "e-s3-entry-data", "type": "custom", "source": "s3-slice-entry", "target": "s3-data-entry" },
+    { "id": "e-s3-entry-tasks", "type": "custom", "source": "s3-slice-entry", "target": "s3-tasks-entry" },
+    { "id": "e-s3-view-contract", "type": "custom", "source": "s3-slice-view", "target": "s3-contract-view" },
+    { "id": "e-s3-view-data", "type": "custom", "source": "s3-slice-view", "target": "s3-data-view" },
+    { "id": "e-s3-view-tasks", "type": "custom", "source": "s3-slice-view", "target": "s3-tasks-view" },
+    { "id": "e-s3-verify-contract", "type": "custom", "source": "s3-slice-verify", "target": "s3-contract-verify" },
+    { "id": "e-s3-verify-data", "type": "custom", "source": "s3-slice-verify", "target": "s3-data-verify" },
+    { "id": "e-s3-verify-tasks", "type": "custom", "source": "s3-slice-verify", "target": "s3-tasks-verify" },
+    { "id": "e-s3-dep-entry-core", "type": "custom", "source": "s3-slice-core", "target": "s3-slice-entry" },
+    { "id": "e-s3-dep-view-core", "type": "custom", "source": "s3-slice-core", "target": "s3-slice-view" },
+    { "id": "e-s3-dep-verify-entry", "type": "custom", "source": "s3-slice-entry", "target": "s3-slice-verify" },
+    { "id": "e-s3-dep-verify-view", "type": "custom", "source": "s3-slice-view", "target": "s3-slice-verify" },
+    { "id": "e-s3-core-gate", "type": "custom", "source": "s3-tasks-core", "target": "s3-gate-7" },
+    { "id": "e-s3-entry-gate", "type": "custom", "source": "s3-tasks-entry", "target": "s3-gate-7" },
+    { "id": "e-s3-view-gate", "type": "custom", "source": "s3-tasks-view", "target": "s3-gate-7" },
+    { "id": "e-s3-verify-gate", "type": "custom", "source": "s3-tasks-verify", "target": "s3-gate-7" }
+  ],
+  "evidence": [],
+  "exportedAt": "2026-11-01T13-05-00.000Z"
+}
