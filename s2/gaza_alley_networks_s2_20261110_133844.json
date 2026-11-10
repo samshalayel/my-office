@@ -1,0 +1,175 @@
+{
+  "nodes": [
+    {
+      "id": "group-s2-20261110-gaza_alley_networks",
+      "type": "group",
+      "data": { "label": "S2 — Architecture" },
+      "position": { "x": 120, "y": 3300 },
+      "width": 1600,
+      "height": 1200,
+      "style": { "width": 1600, "height": 1200, "zIndex": -1 }
+    },
+    {
+      "id": "s2-stage-1",
+      "type": "s2-stage",
+      "data": {
+        "label": "Architecture Spine",
+        "description": "العمود الفقري: تطبيق ويب محلي بلا سيرفر — إدخال فوري وعرض مباشر يخدم MVP الاشتراكات المعتمد (F-1..F-5)",
+        "points": [
+          "نوع التطبيق: صفحة ويب واحدة (SPA) تشتغل من متصفح جهاز مدير الشبكة — بلا تثبيت وبلا سيرفر (ADR-1)",
+          "البيانات تعيش محلياً: localStorage بثلاث مجموعات JSON — subscribers / payments / statusEvents",
+          "ثلاث طبقات: UI (3 شاشات) → Logic (4 خدمات) → Data (LocalStore) — العقود C-1..C-5 موقّعة في api_contract وهي مصدر الحقيقة",
+          "الكشف يُعرض وجهاً لوجه من نفس الشاشة (F-3: أمام المشترك) — بلا حسابات دخول ولا صلاحيات (F-8 خارج MVP)",
+          "النسخ الاحتياطي: تصدير/استيراد ملف JSON يدوي — لا مزامنة سحابية في MVP (ADR-1)",
+          "كل رقم يظهر للإنسان مشتق من السجلات وحدها — النظام يحسب ويعرض والقرار بيد المشغل (NG-2)"
+        ]
+      },
+      "position": { "x": 40, "y": 80 },
+      "width": 360,
+      "height": 260,
+      "parentId": "group-s2-20261110-gaza_alley_networks",
+      "extent": "parent"
+    },
+    {
+      "id": "s2-domains-2",
+      "type": "s2-domains-node",
+      "data": {
+        "label": "Domain Model",
+        "description": "ثلاثة كيانات مخزنة + كشف مشتق لحظياً — كل رقم له أصل في السجلات",
+        "points": [
+          "Subscriber { id, name, phone?, area?, monthlyFee, status, joinedAt } — المشترك: أصل كل عرض ورقم (F-1)",
+          "Payment { id, subscriberId, amount, monthKey, paidAt, method, ref? } — الدفعة: الأصل الوحيد لأي مبلغ محصّل؛ وسيلة نقدي/تحويل + مرجع التحويل تعالج نزاع «حولت وما وصل» الموثق في PD",
+          "StatusEvent { id, subscriberId, from, to, at, reason? } — أثر غير قابل للحذف لكل قرار حالة (F-4)",
+          "Statement (مشتق غير مخزّن): payments + monthsUnpaid + arrears — يُبنى لحظياً من السجلات بلا حقول رصيد مخزنة (ADR-5)",
+          "الانتقالات المسموحة: active ↔ suspended · أي حالة → cancelled — هل الملغي نهائي؟ ⚠ يحتاج قرار بشري",
+          "الحالات active/suspended/cancelled [افتراض] · العملة ILS [افتراض] · صيغة المديونية (شهر كامل أم نسبي) ⚠ يحتاج قرار بشري"
+        ]
+      },
+      "position": { "x": 460, "y": 80 },
+      "width": 360,
+      "height": 260,
+      "parentId": "group-s2-20261110-gaza_alley_networks",
+      "extent": "parent"
+    },
+    {
+      "id": "s2-components-3",
+      "type": "s2-components-node",
+      "data": {
+        "label": "System Components",
+        "description": "القائمة الرسمية — 8 مكونات بأسماء ملزمة لكل ما بعد S2",
+        "points": [
+          "SubscribersScreen (UI): قائمة المشتركين + تسجيل مشترك جديد (C-1) + تغيير الحالة من كارت المشترك (C-2) — يخدم F-1 و F-4",
+          "PaymentsScreen (UI): سجل الدفعات + تسجيل دفعة لحظتها (C-3) + زر تصدير الشهر (C-5) — يخدم F-2 و F-5",
+          "StatementPanel (UI): كشف حساب المشترك للعرض أمام المدير والمشترك — يخدم F-3 (C-4)",
+          "SubscriptionService (Logic): registerSubscriber و changeStatus — العقود C-1 و C-2",
+          "PaymentService (Logic): recordPayment — العقد C-3",
+          "StatementBuilder (Logic): getStatement — بناء الكشف من السجلات فقط — العقد C-4",
+          "CsvExporter (Logic): exportMonthCsv — إنتاج CSV بترميز UTF-8+BOM — العقد C-5",
+          "LocalStore (Data): غلاف localStorage — قراءة كاملة عند الإقلاع · كتابة append عند كل عملية · نسخ احتياطي JSON يدوي"
+        ]
+      },
+      "position": { "x": 880, "y": 80 },
+      "width": 360,
+      "height": 300,
+      "parentId": "group-s2-20261110-gaza_alley_networks",
+      "extent": "parent"
+    },
+    {
+      "id": "s2-interactions-4",
+      "type": "s2-interactions-node",
+      "data": {
+        "label": "Component Interactions",
+        "description": "سير البيانات: من الإدخال → الخدمة → التخزين → العرض — كل سهم يقابل عقداً موقّعاً",
+        "points": [
+          "SubscribersScreen → SubscriptionService.registerSubscriber (C-1) → LocalStore: كتابة subscriber جديدة في gan.subscribers",
+          "SubscribersScreen → SubscriptionService.changeStatus (C-2) → LocalStore: كتابة statusEvent في gan.statusEvents + اشتقاق status الحالي من آخر حدث",
+          "PaymentsScreen → PaymentService.recordPayment (C-3) → LocalStore: كتابة payment بأسلوب append في gan.payments",
+          "StatementPanel → StatementBuilder.getStatement (C-4) → قراءة gan.payments + gan.subscribers + gan.statusEvents → عرض فوري بلا كتابة",
+          "PaymentsScreen → CsvExporter.exportMonthCsv (C-5) → قراءة الشهر المحدد → تنزيل ملف CSV",
+          "LocalStore → تنزيل/رفع ملف JSON يدوي للنسخ الاحتياطي — لا يوجد مسار كتابة خارج العقود الخمسة"
+        ]
+      },
+      "position": { "x": 40, "y": 420 },
+      "width": 380,
+      "height": 300,
+      "parentId": "group-s2-20261110-gaza_alley_networks",
+      "extent": "parent"
+    },
+    {
+      "id": "s2-data-5",
+      "type": "s2-data-domains-node",
+      "data": {
+        "label": "Data Domains",
+        "description": "localStorage — مصفوفات JSON بمفاتيح ثابتة · كتابة append · بلا سيرفر",
+        "points": [
+          "Storage: localStorage في المتصفح — لا سيرفر ولا قاعدة بيانات (ADR-1)",
+          "Format: JSON — مصفوفات subscribers[] · payments[] · statusEvents[] · كائن meta{ schemaVersion }",
+          "Key Pattern: gan.subscribers · gan.payments · gan.statusEvents · gan.meta",
+          "Operations: قراءة كاملة عند الإقلاع · كتابة append لكل عملية حفظ · تنزيل/رفع ملف JSON يدوي كنسخة احتياطية",
+          "Constraint: جهاز واحد ومشغل واحد — لا تعدد كتابة ولا مزامنة سحابية (ADR-1)",
+          "Constraint: سجلات payments و statusEvents غير قابلة للحذف أو التعديل — التصحيح بقيد معاكس (HR-3)"
+        ]
+      },
+      "position": { "x": 480, "y": 420 },
+      "width": 360,
+      "height": 300,
+      "parentId": "group-s2-20261110-gaza_alley_networks",
+      "extent": "parent"
+    },
+    {
+      "id": "s2-constraints-6",
+      "type": "s2-constraints-node",
+      "data": {
+        "label": "Tech Constraints",
+        "description": "قيود صريحة قابلة للفحص نعم/لا — بنفس ترتيب HR في s2_skill",
+        "points": [
+          "HR-1: لا رقم يُعرض بلا أصل مسجل — كل رقم في الكشف مشتق من السجلات فقط (مقابل BR-3)",
+          "HR-2: لا إيقاف أو تفعيل آلي — كل تغيير حالة قرار مشغل مسجل بسببه (NG-2)",
+          "HR-3: لا حذف ولا تعديل صامت لسجل الدفعات — التصحيح بقيد معاكس مرئي (مقابل روح BR-6)",
+          "HR-4: لا رسائل واتساب أو تنبيهات تلقائية — F-6 خارج MVP (سجل الموافقة)",
+          "HR-5: لا غرامات ولا فوائد تأخير — F-7 خارج MVP (سجل الموافقة)",
+          "HR-6: لا صلاحيات ولا حسابات دخول — مشغل واحد فقط، F-8 خارج MVP (سجل الموافقة)",
+          "خارج MVP كلياً: أي ميزة خارج F-1..F-5 (توزيع أرباح، نسب، بطاقات) = مخالفة بروتوكولية (decisions/override_ng3_20261110.md)"
+        ]
+      },
+      "position": { "x": 900, "y": 420 },
+      "width": 360,
+      "height": 260,
+      "parentId": "group-s2-20261110-gaza_alley_networks",
+      "extent": "parent"
+    },
+    {
+      "id": "s2-gate-7",
+      "type": "gate-architecture",
+      "data": {
+        "label": "Architecture Gate ⛔",
+        "description": "بوابة المعمارية — يجب موافقة إنسان على القرارات التقنية",
+        "gateStatus": "pending",
+        "decisionAuthority": "Human",
+        "gateChecklist": [
+          "Domain Model واضح ومتوافق مع PD/S0",
+          "Components محددة بمسؤولياتها",
+          "Interactions واضحة — كل سهم له معنى",
+          "Data Model يدعم كل الـ use cases من S1",
+          "Tech Constraints متوافقة مع القيود من PD"
+        ]
+      },
+      "position": { "x": 400, "y": 820 },
+      "width": 600,
+      "height": 200,
+      "parentId": "group-s2-20261110-gaza_alley_networks",
+      "extent": "parent"
+    }
+  ],
+  "edges": [
+    { "id": "e-s2-stage-domains", "type": "custom", "source": "s2-stage-1", "target": "s2-domains-2" },
+    { "id": "e-s2-domains-components", "type": "custom", "source": "s2-domains-2", "target": "s2-components-3" },
+    { "id": "e-s2-components-interactions", "type": "custom", "source": "s2-components-3", "target": "s2-interactions-4" },
+    { "id": "e-s2-stage-data", "type": "custom", "source": "s2-stage-1", "target": "s2-data-5" },
+    { "id": "e-s2-data-constraints", "type": "custom", "source": "s2-data-5", "target": "s2-constraints-6" },
+    { "id": "e-s2-interactions-gate", "type": "custom", "source": "s2-interactions-4", "target": "s2-gate-7" },
+    { "id": "e-s2-constraints-gate", "type": "custom", "source": "s2-constraints-6", "target": "s2-gate-7" }
+  ],
+  "evidence": [],
+  "exportedAt": "2026-11-10T13:38:44.000Z"
+}
