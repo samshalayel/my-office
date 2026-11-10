@@ -1,0 +1,174 @@
+{
+  "nodes": [
+    {
+      "id": "group-s2-20261110-gaza_alley_networks",
+      "type": "group",
+      "data": { "label": "S2 — Architecture" },
+      "position": { "x": 120, "y": 3300 },
+      "width": 1600,
+      "height": 1200,
+      "style": { "width": 1600, "height": 1200, "zIndex": -1 }
+    },
+    {
+      "id": "s2-stage-1",
+      "type": "s2-stage",
+      "data": {
+        "label": "Architecture Spine",
+        "description": "المعمارية المقترحة: تطبيق ويب مشترك بمخزن بيانات مركزي واحد — كل الأطراف يشوفوا قسمة الإيراد من نفس المصدر",
+        "points": [
+          "التطبيق: واجهة ويب واحدة يشوفها كل الأطراف بنفس الشكل — مدير الشبكة يكتب، الباقي قراءة فقط (BR-4)",
+          "الـ backend: موجود ومطلوب — مخزن مركزي وحيد يستضيف الكشوف والنسب والاستحقاقات، مش تخزين محلي لكل جهاز (K-2, K-5)",
+          "النطاق: F-1→F-5 حصراً بقرار الإنسان 2026-11-10 — F-6 (قفل القسمة) خارج الـ MVP، والتأكيد الجماعي يوثق خارج النظام (BR-5)",
+          "الأنصاب تُحسب آلياً من نسخة النسب المقفولة وتُعرض فقط — القرار بيد الأطراف (NG-2, BR-2)",
+          "اختيار الـ stack والاستضافة متروك للإنسان (ADR-6 — أمن/تكلفة)"
+        ]
+      },
+      "position": { "x": 40, "y": 80 },
+      "width": 360,
+      "height": 260,
+      "parentId": "group-s2-20261110-gaza_alley_networks",
+      "extent": "parent"
+    },
+    {
+      "id": "s2-domains-2",
+      "type": "s2-domains-node",
+      "data": {
+        "label": "Domain Model",
+        "description": "الكيانات السبعة اللي بتحمل كل أرقام القسمة وأصولها",
+        "points": [
+          "Statement: { id, month, revenueEntries[], expenseEntries[], shareRuleVersion, status: open|finalized } — كشف الشهر المفتوح المعروض للجميع (F-1)",
+          "RevenueEntry: { id, source, amount, date } — أصل كل رقم إيراد داخل الكشف (BR-3)",
+          "ExpenseEntry: { id, reason, amount, date, paid } — أصل كل مصروف مسجل على الكشف (BR-3)",
+          "ShareRule: { version, partyShares[], confirmedByAll, confirmedAt } — نسخة مقفولة من النسب، ما تنعدل بل تُستبدل بنسخة جديدة (F-2, BR-1)",
+          "Entitlement: { id, beneficiary, amount, reason, status: pending|paid, paidAt } — استحقاق يظهر قبل صرفه ويتقفل بعده (F-3, BR-7)",
+          "LossProtocol: { version, terms, confirmedByAll } — اتفاق مسبق موثق على وضع المديونية وقت الخسارة (F-4, BR-8)",
+          "ArchivedStatement: { نسخة مجمدة من Statement, shareRuleVersion, closedAt } — قسمة نهائية read-only مرجع دائم (F-5, BR-6)"
+        ]
+      },
+      "position": { "x": 460, "y": 80 },
+      "width": 360,
+      "height": 260,
+      "parentId": "group-s2-20261110-gaza_alley_networks",
+      "extent": "parent"
+    },
+    {
+      "id": "s2-components-3",
+      "type": "s2-components-node",
+      "data": {
+        "label": "System Components",
+        "description": "المكونات الرسمية — أسماؤها ملزمة في كل المراحل اللاحقة (S3/S4)",
+        "points": [
+          "StatementBoard (UI): عرض الكشف المشترك للشهر — كل رقم بأصله ظاهر للجميع بنفس الشكل (F-1, K-5)",
+          "StatementEditor (UI): إدخال بنود الإيراد والمصاريف وإغلاق الشهر — لصاحب الصلاحية الموثق فقط (F-1, BR-4)",
+          "ShareCalculator (Logic): يطبق نسخة النسب المقفولة على الكشف ويطلع أنصاب العرض — يعرض الأرقام ولا يقرر شي (NG-2, BR-2)",
+          "ShareRulePanel (UI+Logic): تدوين العُرف الشفوي كنسخة نسب موثقة وتأكيد الأطراف لقفلها (F-2, BR-1)",
+          "EntitlementLedger (UI+Logic): سجل الاستحقاقات وحالتها — pending قبل الصرف وpaid بعده (F-3, BR-7)",
+          "LossProtocolPanel (UI+Logic): تدوين بروتوكول الخسارة وتأكيده، وعرض موقف المديونية وقت الخسارة (F-4, BR-8)",
+          "ArchiveView (UI): قراءة الأرشيف — كل قسمة مقفولة بنفس أرقامها يرجع لها أي طرف (F-5, BR-6)",
+          "DataStore (Data): مخزن مركزي وحيد — كتابة للكاتب الموثق، قراءة للكل، والنسخ المؤرشفة read-only (K-2)"
+        ]
+      },
+      "position": { "x": 880, "y": 80 },
+      "width": 360,
+      "height": 300,
+      "parentId": "group-s2-20261110-gaza_alley_networks",
+      "extent": "parent"
+    },
+    {
+      "id": "s2-interactions-4",
+      "type": "s2-interactions-node",
+      "data": {
+        "label": "Component Interactions",
+        "description": "سير البيانات من الإدخال للحسبة للعرض للأرشفة — بترتيب التنفيذ",
+        "points": [
+          "StatementEditor → DataStore: بنود الإيراد والمصاريف تنكتب بالمصدر المشترك الوحيد (C-1, F-1)",
+          "ShareRulePanel → DataStore: نسخة النسب تنحفظ مقفولة بعد تأكيد كل الأطراف (C-3, F-2)",
+          "ShareCalculator ← DataStore: تقرأ نسخة النسب المقفولة (C-4) والكشف المفتوح (C-2) → أنصاب تُعرض على StatementBoard (F-1)",
+          "EntitlementLedger ↔ DataStore: تسجيل الاستحقاق pending قبل الصرف وقيده paid بعده (C-5, C-6, F-3)",
+          "LossProtocolPanel → DataStore: البروتوكول يتأكد قبل أي خسارة، ووقتها يُقرأ ويُعرض وفق شروطه (C-7, C-8, F-4)",
+          "DataStore → ArchiveView: عند الإغلاق تنحفظ نسخة مجمدة read-only يفتحها أي طرف (C-9, C-10, F-5)"
+        ]
+      },
+      "position": { "x": 40, "y": 420 },
+      "width": 380,
+      "height": 300,
+      "parentId": "group-s2-20261110-gaza_alley_networks",
+      "extent": "parent"
+    },
+    {
+      "id": "s2-data-5",
+      "type": "s2-data-domains-node",
+      "data": {
+        "label": "Data Domains",
+        "description": "نمط المفاتيح والعمليات على المخزن المركزي الوحيد",
+        "points": [
+          "Storage: مخزن مركزي واحد — فيه كل الكشوف ونسخ النسب والاستحقاقات والبروتوكولات والأرشيف",
+          "Key Pattern: statement/{year}/{month} · share_rules/v{N} · entitlements/{id} · loss_protocol/v{N} · archive/{year}/{month}",
+          "Format: JSON — كل كشف شهر مستند واحد فيه بنوده وأصولها ونسخة النسب المستخدمة بالحسبة",
+          "Operations: قراءة للجميع · كتابة عبر عقود الكاتب الموثق فقط (C-1/C-3/C-5/C-7/C-9) · أرشفة تحوّل الشهر للقراءة البحتة (BR-6)",
+          "Constraint: نسخة النسب والبروتوكول immutable بعد التأكيد — أي تعديل = نسخة جديدة برقم v أعلى (BR-1, BR-8)"
+        ]
+      },
+      "position": { "x": 480, "y": 420 },
+      "width": 360,
+      "height": 300,
+      "parentId": "group-s2-20261110-gaza_alley_networks",
+      "extent": "parent"
+    },
+    {
+      "id": "s2-constraints-6",
+      "type": "s2-constraints-node",
+      "data": {
+        "label": "Tech Constraints",
+        "description": "قيود صارمة — أي اقتراح يخالفها مرفوض عند Gates S3/S4",
+        "points": [
+          "لا حساب آلي يقرر بدل الأطراف — الحساب يعرض فقط والقرار بيد الأطراف (NG-2)",
+          "لا توسع لتحصيل اشتراكات ولا إدارة مشتركين ولا فواتير (NG-3)",
+          "لا رقم بلا أصل ظاهر — كل بند إيراد/مصروف/نسبة موثق بمصدره (BR-3)",
+          "لا تعديل على قسمة مؤرشفة ولا على نسخة نسب مقفولة — التصحيح بنسخة أو مستند جديد مرئي (BR-1, BR-6)",
+          "لا صرف استحقاق إلا بعد ظهوره على المصدر المشترك (BR-7)",
+          "لا تنزيل مديونية إلا وفق بروتوكول مؤكد من كل الأطراف مسبقاً (BR-8)",
+          "لا كتابة إلا من صاحب صلاحية موثق — بقية الأطراف قراءة فقط (BR-4)"
+        ]
+      },
+      "position": { "x": 900, "y": 420 },
+      "width": 360,
+      "height": 260,
+      "parentId": "group-s2-20261110-gaza_alley_networks",
+      "extent": "parent"
+    },
+    {
+      "id": "s2-gate-7",
+      "type": "gate-architecture",
+      "data": {
+        "label": "Architecture Gate ⛔",
+        "description": "بوابة المعمارية — يجب موافقة إنسان على القرارات التقنية",
+        "gateStatus": "pending",
+        "decisionAuthority": "Human",
+        "gateChecklist": [
+          "Domain Model واضح ومتوافق مع PD/S0",
+          "Components محددة بمسؤولياتها",
+          "Interactions واضحة — كل سهم له معنى",
+          "Data Model يدعم كل الـ use cases من S1",
+          "Tech Constraints متوافقة مع القيود من PD"
+        ]
+      },
+      "position": { "x": 400, "y": 820 },
+      "width": 600,
+      "height": 200,
+      "parentId": "group-s2-20261110-gaza_alley_networks",
+      "extent": "parent"
+    }
+  ],
+  "edges": [
+    { "id": "e-s2-stage-domains", "type": "custom", "source": "s2-stage-1", "target": "s2-domains-2" },
+    { "id": "e-s2-domains-components", "type": "custom", "source": "s2-domains-2", "target": "s2-components-3" },
+    { "id": "e-s2-components-interactions", "type": "custom", "source": "s2-components-3", "target": "s2-interactions-4" },
+    { "id": "e-s2-stage-data", "type": "custom", "source": "s2-stage-1", "target": "s2-data-5" },
+    { "id": "e-s2-data-constraints", "type": "custom", "source": "s2-data-5", "target": "s2-constraints-6" },
+    { "id": "e-s2-interactions-gate", "type": "custom", "source": "s2-interactions-4", "target": "s2-gate-7" },
+    { "id": "e-s2-constraints-gate", "type": "custom", "source": "s2-constraints-6", "target": "s2-gate-7" }
+  ],
+  "evidence": [],
+  "exportedAt": "2026-11-10T13:33:02.000Z"
+}
