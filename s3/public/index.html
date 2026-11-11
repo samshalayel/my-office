@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="theme-color" content="#1976d2" />
+    <meta name="description" content="POS Ledger - دفتر يوميات متجر بقالة أوفلاين" />
+
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="/manifest.json" />
+
+    <!-- Apple Web App Meta Tags -->
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="POS Ledger" />
+    <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'><rect fill='%231976d2' width='192' height='192'/><text x='50%' y='50%' fill='white' font-size='120' text-anchor='middle' dominant-baseline='middle' font-weight='bold'>POS</text></svg>" />
+
+    <!-- Icons -->
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect fill='%231976d2' width='100' height='100'/><text x='50' y='55' fill='white' font-size='60' text-anchor='middle' font-weight='bold'>P</text></svg>" />
+
+    <!-- Styles -->
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      html, body {
+        width: 100%;
+        height: 100%;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+        background-color: #f5f5f5;
+        color: #333;
+      }
+
+      #app {
+        width: 100%;
+        height: 100%;
+      }
+
+      /* Prevent scroll bounce on iOS */
+      body {
+        overscroll-behavior: none;
+        position: fixed;
+      }
+
+      /* Loading indicator for initial load */
+      #app::before {
+        content: "";
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 40px;
+        height: 40px;
+        margin-left: -20px;
+        margin-top: -20px;
+        border: 3px solid #f3f3f3;
+        border-top: 3px solid #1976d2;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+        z-index: 1000;
+      }
+
+      @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+      }
+
+      /* Hide loading spinner once content is loaded */
+      #app.loaded::before {
+        display: none;
+      }
+
+      .page-loading {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 200px;
+        color: #999;
+        font-size: 16px;
+      }
+
+      .error {
+        padding: 20px;
+        background-color: #ffebee;
+        color: #c62828;
+        border-radius: 4px;
+        margin: 20px;
+        text-align: center;
+      }
+
+      /* Prevent FOUC (Flash of Unstyled Content) */
+      html {
+        background-color: white;
+      }
+    </style>
+
+    <title>POS Ledger - دفتر يوميات المتجر</title>
+  </head>
+
+  <body dir="rtl">
+    <div id="app"></div>
+
+    <!-- Service Worker registration and main app script -->
+    <script type="module" src="/main.js"></script>
+
+    <!-- Fallback script if modules not supported -->
+    <script nomodule>
+      console.error('This application requires ES6 module support');
+      document.body.innerHTML = '<div style="padding: 20px; text-align: center; direction: rtl;"><h1>متصفح غير مدعوم</h1><p>يرجى استخدام متصفح حديث يدعم تقنية ES6</p></div>';
+    </script>
+
+    <!-- Progressive enhancement: if SW and IndexedDB not available -->
+    <script>
+      window.addEventListener('load', function() {
+        const app = document.getElementById('app');
+        if (app && app.innerHTML.trim() === '') {
+          // If app didn't load, show error
+          app.innerHTML = '<div style="padding: 20px; text-align: center; direction: rtl;"><h1>خطأ في التحميل</h1><p>فضلاً أعد تحميل الصفحة</p></div>';
+        } else {
+          app.classList.add('loaded');
+        }
+      });
+
+      // Check for required features
+      if (!window.indexedDB) {
+        console.error('IndexedDB not supported');
+      }
+      if (!('serviceWorker' in navigator)) {
+        console.warn('Service Workers not supported');
+      }
+    </script>
+  </body>
+</html>
