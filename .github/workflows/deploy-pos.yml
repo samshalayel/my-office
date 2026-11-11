@@ -1,0 +1,151 @@
+# نشر واجهة POS — staging تلقائي مع كل دمج، والإنتاج بموافقة.
+#   staging    → https://pos-staging.sillar.us  (تلقائي عند تغيّر POS/ في main)
+#   production → https://pos.sillar.us          (بعد نجاح staging، ينتظر موافقة بيئة "production")
+# يحتاج في Settings → Secrets → Actions لهذا الريبو: VPS_HOST, VPS_USER, VPS_PASSWORD (سيرفر الـ Docker)
+# وفي Settings → Environments: بيئة "production" مع Required reviewers.
+name: Deploy POS
+
+on:
+  push:
+    branches: [main]
+    paths: ["POS/**", ".github/workflows/deploy-pos.yml"]
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-pos
+  cancel-in-progress: false
+
+env:
+  APP_DIR: POS
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    outputs:
+      ready: ${{ steps.detect.outputs.ready }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: detect
+        name: Is there a web app to build?
+        run: |
+          # واجهة قابلة للبناء = POS/package.json فيه سكربت build (مثل تطبيق Vite) ينتج POS/dist
+          if [ -f "$APP_DIR/package.json" ] && node -e "process.exit(require('./$APP_DIR/package.json').scripts?.build ? 0 : 1)"; then
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::لا توجد واجهة قابلة للبناء في $APP_DIR بعد (package.json + سكربت build) — لا نشر هذه المرة."
+          fi
+      - uses: actions/setup-node@v4
+        if: steps.detect.outputs.ready == 'true'
+        with:
+          node-version: 20
+      - name: Build
+        if: steps.detect.outputs.ready == 'true'
+        working-directory: ${{ env.APP_DIR }}
+        run: |
+          if [ -f package-lock.json ]; then npm ci; else npm install --no-audit --no-fund; fi
+          npm run build
+          test -f dist/index.html || { echo "::error::البناء لم ينتج $APP_DIR/dist/index.html"; exit 1; }
+          echo "$GITHUB_SHA" > dist/version.txt
+          tar -czf ../site.tar.gz -C dist .
+      - uses: actions/upload-artifact@v4
+        if: steps.detect.outputs.ready == 'true'
+        with:
+          name: site
+          path: site.tar.gz
+          retention-days: 7
+
+  staging:
+    needs: build
+    if: needs.build.outputs.ready == 'true'
+    runs-on: ubuntu-latest
+    environment:
+      name: staging
+      url: https://pos-staging.sillar.us
+    steps:
+      - uses: actions/download-artifact@v4
+        with: { name: site }
+      - uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          password: ${{ secrets.VPS_PASSWORD }}
+          source: site.tar.gz
+          target: /tmp/pos-deploy-staging
+      - uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          password: ${{ secrets.VPS_PASSWORD }}
+          script: |
+            set -e
+            NAME=pos-staging; HOST=pos-staging.sillar.us; ROOT=/srv/sites/$NAME
+            # نشر ذرّي: مجلد جديد ثم تبديل الرابط — لا لحظة يكون فيها الموقع نصف منشور
+            REL=$ROOT/releases/${{ github.sha }}; mkdir -p "$REL"
+            tar -xzf /tmp/pos-deploy-staging/site.tar.gz -C "$REL" && rm -rf /tmp/pos-deploy-staging
+            # رابط نسبي: داخل حاوية nginx المجلد مركّب على /site، فالمسار المطلق للسيرفر لا يوجد هناك
+            ln -sfn "releases/${{ github.sha }}" "$ROOT/current"
+            ls -1dt $ROOT/releases/* | tail -n +6 | xargs -r rm -rf   # آخر 5 نسخ للتراجع
+            # حاوية nginx خلف Traefik (تُنشأ مرة واحدة)
+            if ! docker ps -a --format '{{.Names}}' | grep -qx "$NAME"; then
+              docker run -d --name "$NAME" --restart unless-stopped --network web \
+                -v "$ROOT:/site:ro" \
+                --label traefik.enable=true --label traefik.docker.network=web \
+                --label "traefik.http.routers.$NAME.rule=Host(\`$HOST\`)" \
+                --label "traefik.http.routers.$NAME.entrypoints=websecure" \
+                --label "traefik.http.routers.$NAME.tls=true" \
+                --label "traefik.http.routers.$NAME.tls.certresolver=cf" \
+                --label "traefik.http.services.$NAME.loadbalancer.server.port=80" \
+                nginx:1.27-alpine sh -c "rm -rf /usr/share/nginx/html && ln -s /site/current /usr/share/nginx/html && nginx -g 'daemon off;'"
+            fi
+            sleep 3
+            V=$(curl -s -m 20 "https://$HOST/version.txt?v=${{ github.sha }}" | tr -d '[:space:]')
+            echo "live: ${V:-nothing}"
+            [ "$V" = "${{ github.sha }}" ] || { echo "::warning::الموقع لا يرد بالنسخة الجديدة بعد — تحقق من DNS لـ $HOST"; }
+
+  production:
+    needs: [build, staging]
+    if: needs.build.outputs.ready == 'true'
+    runs-on: ubuntu-latest
+    # بيئة "production" بـ Required reviewers: هذا الـ job ينتظر موافقتك قبل أن يبدأ
+    environment:
+      name: production
+      url: https://pos.sillar.us
+    steps:
+      - uses: actions/download-artifact@v4
+        with: { name: site }
+      - uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          password: ${{ secrets.VPS_PASSWORD }}
+          source: site.tar.gz
+          target: /tmp/pos-deploy-prod
+      - uses: appleboy/ssh-action@v1.2.0
+        with:
+          host: ${{ secrets.VPS_HOST }}
+          username: ${{ secrets.VPS_USER }}
+          password: ${{ secrets.VPS_PASSWORD }}
+          script: |
+            set -e
+            NAME=pos; HOST=pos.sillar.us; ROOT=/srv/sites/$NAME
+            REL=$ROOT/releases/${{ github.sha }}; mkdir -p "$REL"
+            tar -xzf /tmp/pos-deploy-prod/site.tar.gz -C "$REL" && rm -rf /tmp/pos-deploy-prod
+            # رابط نسبي: داخل حاوية nginx المجلد مركّب على /site، فالمسار المطلق للسيرفر لا يوجد هناك
+            ln -sfn "releases/${{ github.sha }}" "$ROOT/current"
+            ls -1dt $ROOT/releases/* | tail -n +11 | xargs -r rm -rf   # آخر 10 نسخ للتراجع
+            if ! docker ps -a --format '{{.Names}}' | grep -qx "$NAME"; then
+              docker run -d --name "$NAME" --restart unless-stopped --network web \
+                -v "$ROOT:/site:ro" \
+                --label traefik.enable=true --label traefik.docker.network=web \
+                --label "traefik.http.routers.$NAME.rule=Host(\`$HOST\`)" \
+                --label "traefik.http.routers.$NAME.entrypoints=websecure" \
+                --label "traefik.http.routers.$NAME.tls=true" \
+                --label "traefik.http.routers.$NAME.tls.certresolver=cf" \
+                --label "traefik.http.services.$NAME.loadbalancer.server.port=80" \
+                nginx:1.27-alpine sh -c "rm -rf /usr/share/nginx/html && ln -s /site/current /usr/share/nginx/html && nginx -g 'daemon off;'"
+            fi
+            sleep 3
+            V=$(curl -s -m 20 "https://$HOST/version.txt?v=${{ github.sha }}" | tr -d '[:space:]')
+            echo "live: ${V:-nothing}"
+            [ "$V" = "${{ github.sha }}" ] || { echo "::error::الإنتاج لا يرد بالنسخة الجديدة — تحقق من DNS لـ $HOST"; exit 1; }
