@@ -1,0 +1,91 @@
+{
+  "name": "POS Ledger - دفتر يوميات المتجر",
+  "short_name": "POS Ledger",
+  "description": "تطبيق قيد يومي أوفلاين لمتاجر البقالة ثنائي الاتجاه - دفترين للعملاء والموردين",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#ffffff",
+  "theme_color": "#1976d2",
+  "dir": "rtl",
+  "lang": "ar",
+  "categories": ["business", "productivity"],
+  "icons": [
+    {
+      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 192 192'><rect fill='%231976d2' width='192' height='192' rx='45'/><text x='50%' y='50%' fill='white' font-size='100' text-anchor='middle' dominant-baseline='middle' font-weight='bold'>POS</text></svg>",
+      "sizes": "192x192",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'><rect fill='%231976d2' width='512' height='512' rx='120'/><text x='50%' y='50%' fill='white' font-size='280' text-anchor='middle' dominant-baseline='middle' font-weight='bold'>POS</text></svg>",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 540 720'><rect fill='%23f5f5f5' width='540' height='720'/><rect fill='%23fff' width='540' height='60'/><text x='270' y='35' fill='%23333' font-size='24' text-anchor='middle' font-weight='bold' direction='rtl'>دفتر العملاء</text></svg>",
+      "sizes": "540x720",
+      "type": "image/svg+xml"
+    },
+    {
+      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1080 1920'><rect fill='%23f5f5f5' width='1080' height='1920'/><rect fill='%23fff' width='1080' height='120'/><text x='540' y='70' fill='%23333' font-size='48' text-anchor='middle' font-weight='bold' direction='rtl'>سجل اليوم</text></svg>",
+      "sizes": "1080x1920",
+      "type": "image/svg+xml"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "دفتر العملاء",
+      "short_name": "العملاء",
+      "description": "عرض دفتر العملاء والديون",
+      "url": "/ledger/client",
+      "icons": [
+        {
+          "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 96 96'><rect fill='%231976d2' width='96' height='96'/><text x='48' y='48' fill='white' font-size='50' text-anchor='middle' dominant-baseline='middle'>👥</text></svg>",
+          "sizes": "96x96",
+          "type": "image/svg+xml"
+        }
+      ]
+    },
+    {
+      "name": "دفتر الموردين",
+      "short_name": "الموردين",
+      "description": "عرض دفتر الموردين والديون",
+      "url": "/ledger/supplier",
+      "icons": [
+        {
+          "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 96 96'><rect fill='%231976d2' width='96' height='96'/><text x='48' y='48' fill='white' font-size='50' text-anchor='middle' dominant-baseline='middle'>🏢</text></svg>",
+          "sizes": "96x96",
+          "type": "image/svg+xml"
+        }
+      ]
+    },
+    {
+      "name": "سجل اليوم",
+      "short_name": "اليوم",
+      "description": "عرض عمليات اليوم",
+      "url": "/daily-log",
+      "icons": [
+        {
+          "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 96 96'><rect fill='%231976d2' width='96' height='96'/><text x='48' y='48' fill='white' font-size='50' text-anchor='middle' dominant-baseline='middle'>📅</text></svg>",
+          "sizes": "96x96",
+          "type": "image/svg+xml"
+        }
+      ]
+    }
+  ],
+  "share_target": {
+    "action": "/share",
+    "method": "POST",
+    "enctype": "multipart/form-data",
+    "params": {
+      "title": "title",
+      "text": "text",
+      "url": "url"
+    }
+  }
+}
