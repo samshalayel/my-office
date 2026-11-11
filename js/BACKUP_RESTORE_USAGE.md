@@ -127,8 +127,8 @@ if (isEmpty) {
   "version": "1.0",
   "exportedAt": "2026-11-11T12:00:00.000Z",
   "metadata": {
-    "schemaVersion": "1.0",
-    "initializedAt": "2026-11-01T00:00:00.000Z"
+    "schemaVersion": 1,
+    "lastInitialized": "2026-11-01T00:00:00.000Z"
   },
   "accounts": [
     {

@@ -29,7 +29,8 @@ export class BackupRestoreService {
     return {
       version: '1.0',
       exportedAt: new Date().toISOString(),
-      metadata: metadata || { schemaVersion: '1.0', initializedAt: new Date().toISOString() },
+      // نفس حقول MetaData في types.ts و ledger-store.ts: schemaVersion رقم، و lastInitialized
+      metadata: metadata || { schemaVersion: 1, lastInitialized: new Date().toISOString() },
       accounts,
       entries
     };
