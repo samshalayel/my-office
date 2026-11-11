@@ -1,0 +1,72 @@
+﻿Task Name,Description,Status,Priority,Tags,List,Parent Task,Time Estimate,Assignee
+"[base-T1] طبقة التخزين المحلية: LocalDatabase (IndexedDB) + LedgerStore والفهارس","بناء LocalDatabase فوق IndexedDB وتغليفها بمكوّن LedgerStore وحيد (ADR-2): مخزن accounts ومخزن entries بفهارس (بحساب / باليوم / بالاتجاه) لسرعة الاستجابة (SC-1) وحجم ~270 حساباً (SC-3).
+Refs: E-Account, E-Entry",to do,urgent,"POS,s3,slice-base",POS,,180,
+"[base-T2] هيكل PWA أوفلاين: AppShell + Service Worker","هيكل PWA أوفلاين-أولاً: AppShell للتنقل بين الدفترين واللوحة وسجل اليوم + Service Worker يعمل بلا اتصال من أول تشغيل — ADR-1 يوجب بناء SW من اليوم الأول؛ HR-1 يمنع أي استدعاء شبكة في مسار العرض؛ BR-7 يجعل الوظائف اليومية أوفلاين.
+Refs: ACTOR-صاحب المتجر, ADR-1, HR-1, BR-7
+يعتمد على: [base-T1]",to do,urgent,"POS,s3,slice-base",POS,,180,
+"[base-T3] Account: إضافة حساب بتحقق كامل","إضافة حساب عميل أو مورّد بتحقق كامل في طبقة البيانات: الاسم فريد داخل side، side ثابت بعد الإنشاء، مع الحقول القياسية.
+Refs: E-Account, ACTOR-صاحب المتجر
+يعتمد على: [base-T1]",to do,urgent,"POS,s3,slice-base",POS,,60,
+"[base-T4] Account: قائمة ببحث وفلترة وترتيب","قائمة الحسابات مع بحث بالاسم وفلترة حسب الاتجاه (ما لي / ما عليّ) وترتيب — مبنية على فهرس side لتحمل ~270 حساباً (SC-3).
+Refs: E-Account, SC-3
+يعتمد على: [base-T1]",to do,urgent,"POS,s3,slice-base",POS,,180,
+"[base-T5] Account: عرض تفاصيل الحساب","صفحة تفاصيل الحساب مع سجله المرتبط.
+Refs: E-Account
+يعتمد على: [base-T4]",to do,urgent,"POS,s3,slice-base",POS,,60,
+"[base-T6] Account: تعديل الاسم بتحقق — side ثابت","تعديل اسم الحساب بتحقق الفرادة داخل side — side لا يُعدَّل بعد الإنشاء، ويُوثَّق التحديث في updated_at.
+Refs: E-Account
+يعتمد على: [base-T3]",to do,urgent,"POS,s3,slice-base",POS,,60,
+"[base-T7] Account: أرشفة واسترجاع بدل الحذف","أرشفة الحساب بـ archived_at مع إمكانية الاسترجاع — الأرشفة هي البديل الافتراضي للحذف، ولا حذف نهائي (لم يطلبه S2).
+Refs: E-Account
+يعتمد على: [base-T3]",to do,urgent,"POS,s3,slice-base",POS,,60,
+"[base-T8] Entry: كتابة append-only واستعلام بحساب وباليوم","عمليات LedgerStore على السجل: كتابة إلحاقية فقط — لا تعديل ولا حذف بعد الكتابة (BR-2) — واستعلام بالحساب وباليوم عبر الفهارس.
+Refs: E-Entry, BR-2
+يعتمد على: [base-T1]",to do,urgent,"POS,s3,slice-base",POS,,180,
+"[base-T9] BASE-8: الإعدادات — الاسم والعملة وصيغ الأرقام","إعدادات قابلة للتغيير بدل تثبيتها بالكود: اسم المتجر، العملة، صيغ الأرقام والتواريخ (BASE-8).
+Refs: BASE-8
+يعتمد على: [base-T1]",to do,urgent,"POS,s3,slice-base",POS,,60,
+"[base-T10] BASE-5: تصدير CSV للقوائم","تصدير CSV لكل قائمة: الحسابات، سجل حساب، سجل اليوم — بترميز UTF-8 مع BOM (BASE-5).
+Refs: BASE-5
+يعتمد على: [base-T4], [base-T8]",to do,urgent,"POS,s3,slice-base",POS,,180,
+"[base-T11] BASE-7: نسخة احتياطية محلية واستعادة","تصدير JSON كامل للسجل + استعادة تُقبل على قاعدة فارغة فقط — الطبقة الأولى من النسخ الاحتياطي (ADR-1 بعد قرار الإنسان: الطبقة السحابية المشفّرة في [base-T15]).
+Refs: BASE-7, ADR-1
+يعتمد على: [base-T8]",to do,urgent,"POS,s3,slice-base",POS,,180,
+"[base-T12] BASE-9: واجهة عربية RTL واتجاه صحيح","واجهة عربية أولاً: اتجاه RTL صحيح وأرقام وتواريخ بمفهوم المستخدم في كل الشاشات (BASE-9).
+Refs: BASE-9
+يعتمد على: [base-T2]",to do,urgent,"POS,s3,slice-base",POS,,60,
+"[base-T13] BASE-10: معالجة الأخطاء — رسائل مفهومة وسجل محلي","رسالة خطأ عربية مفهومة للمستخدم + تسجيل تفصيلي محلي على الجهاز، بلا stack trace للمستخدم (BASE-10).
+Refs: BASE-10
+يعتمد على: [base-T1]",to do,urgent,"POS,s3,slice-base",POS,,60,
+"[base-T14] 👤 BASE-11: أمان أساسي — تحقق المدخلات ولا أسرار وHTTPS","تحقق المدخلات في طبقة البيانات + لا أسرار في الريبو + HTTPS للاستضافة (شرط عمل Service Worker) — لا ينطبق: كلمات السر وحد المحاولات (لا مستخدمين — NG-3).
+Refs: BASE-11, NG-3
+يعتمد على: [base-T1]",to do,urgent,"POS,s3,slice-base,human-review",POS,,180,
+"[base-T15] 👤 ADR-1 بقرار الإنسان: نسخ احتياطي مشفّر سحابي","رفع نسخة مشفّرة من ملف النسخ ([base-T11]) إلى تخزين سحابي: التشفير قبل خروج البيانات من الجهاز، المفاتيح خارج الريبو، الشبكة في مسار النسخ فقط (HR-1 سليمة)، واستعادة مُجرَّبة من السحابة — قرار ADR-1 في POS_gate_2026-11-11T13-11-56Z.md.
+Refs: BASE-7, ADR-1, HR-1
+يعتمد على: [base-T11]",to do,urgent,"POS,s3,slice-base,human-review",POS,,180,
+"[entry-T1] 👤 تنفيذ C-1 addEntry — الكتابة الإلحاقية في السجل","تنفيذ عقد C-1 بنفس التوقيع حرفياً: توليد Entry وكتابة إلحاقية واحدة عبر LedgerStore — لا تعديل ولا حذف بعد الكتابة (HR-3, BR-2)؛ debt_* يزيد وpayment_* ينقص وcash_sale لا يمس أرصدة (BR-8).
+Refs: C-1, HR-3, HR-4, HR-5, BR-2, BR-8
+يعتمد على: [base-T8]",to do,high,"POS,s3,slice-entry,human-review",POS,,180,
+"[entry-T2] 👤 EntryValidator — قواعد التحقق وحالات الفشل","التحقق قبل الكتابة: النوع ضمن القائمة الست، accountId مطلوب لكل الأنواع إلا cash_sale (BR-1, BR-8)، amount > 0، ts افتراضي لحظة التسجيل — والتسديد الزائد ليس فشلاً (BR-5 محسومة: رصيد على حساب الطرف).
+Refs: C-1, HR-4, HR-5, BR-1, BR-5, BR-8
+يعتمد على: [entry-T1]",to do,high,"POS,s3,slice-entry,human-review",POS,,180,
+"[entry-T3] QuickEntryForm — إدخال عملية بأقل من دقيقة بنوع صريح","شاشة الإدخال السريع: عملية واحدة بأقل من دقيقة بنوع صريح — تعبر EntryValidator ولا تكتب على التخزين مباشرة (F-1, F-4, F-10).
+Refs: C-1, F-1, F-4, F-10
+يعتمد على: [entry-T2]",to do,high,"POS,s3,slice-entry",POS,,180,
+"[calc-T1] 👤 BalanceCalculator — احتساب الثلاثية من السجل بلا عدّ مزدوج","احتساب DerivedBalance: totalDebt = مجموع debt_*، totalPaid = مجموع payment_*، balance = totalDebt − totalPaid — كل عملية تُعدّ مرة واحدة (لا عدّ مزدوج)، الرصيد لا يُخزَّن كمصدر (ADR-3)، والتسديد الزائد يبقى رصيداً دائناً على حساب الطرف (BR-5 محسومة).
+Refs: C-3, BR-3, BR-4, BR-5, BR-6, ADR-3
+يعتمد على: [base-T8]",to do,high,"POS,s3,slice-calc,human-review",POS,,480,
+"[calc-T2] تركيب AccountSummary مع علامات «مُصحّح»","تركيب AccountSummary: الحساب + الثلاثية + عملياته بالترتيب الزمني مع علامة «مُصحّح» للعمليات المرتبطة بـ linkedTo (ADR-4).
+Refs: C-3, BR-2, ADR-4
+يعتمد على: [calc-T1]",to do,high,"POS,s3,slice-calc",POS,,180,
+"[views-T1] AccountsDashboard — لوحة الدفترين بأرصدة لحظية وبحث","لوحة الحسابات: «ما لي» و«ما عليّ» بأرصدة لحظية من BalanceCalculator + بحث بالاسم (F-5, F-6) — لا تحسب بنفسها ولا تلمس IndexedDB مباشرة.
+Refs: C-3, F-5, F-6, SC-1
+يعتمد على: [calc-T1]",to do,high,"POS,s3,slice-views",POS,,180,
+"[views-T2] AccountLedgerView — شاشة حساب الطرف كدليل","شاشة حساب الطرف: الثلاثية وسجل الحركات بتواريخها — تُعرض كدليل عند الخلاف (SC-5).
+Refs: C-3, F-7, SC-5
+يعتمد على: [calc-T2]",to do,high,"POS,s3,slice-views",POS,,180,
+"[views-T3] DayLedgerView — سجل حركة اليوم (تنفيذ C-7)","سجل حركة اليوم: عمليات ts ∈ [00:00, 24:00) بالترتيب الزمني — تنفيذ عقد C-7 في هذه الشريحة (F-10).
+Refs: C-7, F-10
+يعتمد على: [base-T8]",to do,high,"POS,s3,slice-views",POS,,180,
+"[migr-T1] 👤 OpeningMigrationPanel — القيد الافتتاحي وإقفال نقل الحساب","قيد افتتاحي (opening) لكل حساب أثناء النقل التدريجي من الدفتر الورقي + إقفال النقل بـ ledgerTransfer=completed — حركة مالية → مراجعة بشرية إلزامية (F-9, س8-2).
+Refs: C-1, F-9, ACTOR-صاحب المتجر
+يعتمد على: [entry-T1], [base-T3]",to do,high,"POS,s3,slice-migr,human-review",POS,,180,
