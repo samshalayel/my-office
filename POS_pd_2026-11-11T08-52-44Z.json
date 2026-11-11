@@ -1,0 +1,249 @@
+{
+  "template": "PD-v1",
+  "layout": "v2-styled-fanout",
+  "project": "POS",
+  "stage": "PD",
+  "generatedAt": "2026-11-11T08-52-44Z",
+  "source": "human_story",
+  "changeNote": "إعادة تصميم بصرية فقط بطلب الإنسان: تخطيط مشعّع بدل العمود الأحادي + هوية لونية/شكلية لكل بطاقة وتنسيق الحواف حسب مصدرها. المحتوى الدلالي (العناوين، الأوصاف، معرّفات G/P/K/SC/U، gateStatus) مطابق للحزمة السابقة POS_pd_2026-11-11T08-17-23Z.json، ومصدر الحقيقة يبقى POS_pd_brief_2026-11-11T08-17-23Z.md.",
+  "supersedes": "POS_pd_2026-11-11T08-17-23Z.json",
+  "nodes": [
+    {
+      "id": "pd-summary-1",
+      "type": "pdCard",
+      "position": { "x": 480, "y": 20 },
+      "shape": "hero-wide",
+      "style": {
+        "background": "linear-gradient(135deg,#0f172a 0%,#312e81 100%)",
+        "color": "#ffffff",
+        "border": "1px solid #4338ca",
+        "borderRadius": "18px",
+        "padding": "20px 24px",
+        "width": 440,
+        "boxShadow": "0 14px 36px rgba(49,46,129,0.45)"
+      },
+      "data": {
+        "title": "المشكلة كما يعيشها المستخدم",
+        "description": "صاحب بقالة صغيرة يدير دورته اليومية بنفسه: يشتري بضائع من سوق الجملة، يرصّها على الرفوف، ويبيعها بالتجزئة. يسجّل مبيعاته اليومية على الورق، وهذه المهمة ترهقه وتقع فيها أخطاء، وتتركز الأخطاء «خاصةً» في تسجيل الديون وتسجيل تسديدها. النتيجة أنه لا يملك سجلاً موثوقاً لمبيعاته وديونه، ويُستهلك يومياً في التسجيل الورقي دون نتيجة يعتمد عليها. طلب صاحب المتجر صراحةً معالجة عبر «حل برمجي» دون أن يحدد شكله. [مؤكد من إجابات الإنسان]: الديون في الاتجاهين — ما على عملائه من البيع بالأجل (نحو 250 عميلاً مديناً) وما عليه هو لمورّديه (نحو 20 مورّداً) — وعند وقوع خطأ تنشأ «خلافات» تحاول الأطراف في كل مرة تقسيم خسارتها فيما بينها.",
+        "points": []
+      }
+    },
+    {
+      "id": "pd-actors-2",
+      "type": "pdCard",
+      "position": { "x": 60, "y": 320 },
+      "shape": "group-panel",
+      "style": {
+        "background": "#eff6ff",
+        "color": "#1e3a8a",
+        "border": "2px solid #2563eb",
+        "borderRadius": "14px",
+        "padding": "16px",
+        "width": 340
+      },
+      "data": {
+        "title": "الأطراف (Actors)",
+        "description": "الأطراف كما وردت في القصة والإجابات وعلاقة كل منها بالمشكلة.",
+        "points": [
+          "صاحب المتجر: يشتري من سوق الجملة، يرصّ البضائع على الرفوف، يبيع بالتجزئة، ويسجّل المبيعات والديون على الورق بنفسه [افتراض: دون عاملين] — طرف في الدين من الجهتين: لعملائه وعليه لمورّديه — يخسر جهد كل يوم ودقة أرقامه إن بقيت المشكلة",
+          "العملاء: يشترون بالتجزئة؛ نحو 250 عميلاً مديناً [مؤكد — Q-2] يُسجَّل عليهم دَين ثم يسدّد — يخسرون وضوح الموقف المالي المتبادل مع صاحب المتجر إن استمرت أخطاء الورق، وقد يُجرّون خلافات تقسيم الخسارة",
+          "تجار الجملة (نحو 20 مورّداً [مؤكد — Q-2]): مصدر البضائع في بداية الدورة، وعليهم ديون لصاحب المتجر [مؤكد — Q-1] — طرف في الخلافات وتقسيم الخسارة عند الخطأ"
+        ]
+      }
+    },
+    {
+      "id": "pd-goals-3",
+      "type": "pdCard",
+      "position": { "x": 980, "y": 300 },
+      "shape": "accent-left",
+      "style": {
+        "background": "#ecfdf5",
+        "color": "#064e3b",
+        "borderLeft": "6px solid #059669",
+        "borderRadius": "12px",
+        "padding": "16px",
+        "width": 360,
+        "boxShadow": "0 4px 14px rgba(5,150,105,0.18)"
+      },
+      "data": {
+        "title": "الأهداف (Goals)",
+        "description": "أهداف غير تقنية مستمدة من القصة والإجابات، وكل هدف يعالج ألماً محدداً.",
+        "points": [
+          "G-1: أن يخفّ عبء الرهقة الناتج عن تسجيل المبيعات اليومية — يعالج P-1",
+          "G-2: أن تنخفض أخطاء التسجيل إلى مستوى يُعتمد عليه — يعالج P-2 (وينعكس على P-3 وP-4 وP-5)",
+          "G-3: أن يُسجَّل كل دَين بشكل صحيح وموثوق — في الاتجاهين: ما على العملاء وما على صاحب المتجر للمورّدين — يعالج P-3",
+          "G-4: أن يُسجَّل تسديد كل دَين بحيث يُعرف المسدَّد من المتبقي — للعملاء وللمورّدين — يعالج P-4"
+        ]
+      }
+    },
+    {
+      "id": "pd-pain-4",
+      "type": "pdCard",
+      "position": { "x": 60, "y": 620 },
+      "shape": "alert-sharp",
+      "style": {
+        "background": "#fef2f2",
+        "color": "#7f1d1d",
+        "border": "2px dashed #dc2626",
+        "borderRadius": "6px",
+        "padding": "16px",
+        "width": 360
+      },
+      "data": {
+        "title": "نقاط الألم (Pain Points)",
+        "description": "ألماً صريحة كما وردت في القصة والإجابات، بصيغة الأعراض كما يعيشها أصحابها.",
+        "points": [
+          "P-1: رهقة التسجيل الورقي اليومي — المهمة تستهلك كل يوم دون نتيجة يُعتمد عليها",
+          "P-2: أخطاء متكررة في التسجيل الورقي تتركّز «خاصةً» في الديون وتسديداتها",
+          "P-3: غياب سجل موثوق للديون في الاتجاهين: ما على العملاء (~250) وما على صاحب المتجر للمورّدين (~20)",
+          "P-4: عند سداد جزئي لا يُعرف بيقين المسدَّد من المتبقي — الأرقام تضيع بين الأسطر",
+          "P-5: عند اكتشاف خطأ تنشأ «خلافات» بين الأطراف (صاحب المتجر، عملاء، مورّدون) وتُقسَّم الخسارة في كل مرة على نحو عشوائي [مؤكد — Q-3]"
+        ]
+      }
+    },
+    {
+      "id": "pd-constraints-5",
+      "type": "pdCard",
+      "position": { "x": 980, "y": 640 },
+      "shape": "band-top",
+      "style": {
+        "background": "#fffbeb",
+        "color": "#78350f",
+        "borderTop": "6px solid #d97706",
+        "borderRadius": "12px",
+        "padding": "16px",
+        "width": 360
+      },
+      "data": {
+        "title": "القيود (Constraints)",
+        "description": "قيود محيطة بالمشكلة كما وردت في القصة أو مُعلَّمة [افتراض].",
+        "points": [
+          "K-1: بيئة عمل ورقية راسخة — الانتقال عنها يعني تغيير عادة يومية",
+          "K-2: ضيق الوقت: اليوم التشغيلي مشغول أصلاً (شراء، رصّ، بيع) ولا يحتمل عبئاً إضافياً",
+          "K-3: حجم الحسابات (~250 عميلاً، ~20 مورّداً) يجعل أي تدقيق يدوي للورق مكلفاً [مؤكد — Q-2]",
+          "K-4: [افتراض] ميزانية/جهد الانتقال غير محددين — يُحسمان في Q-5"
+        ]
+      }
+    },
+    {
+      "id": "pd-scope-6",
+      "type": "pdCard",
+      "position": { "x": 60, "y": 960 },
+      "shape": "split-two-tone",
+      "style": {
+        "background": "linear-gradient(180deg,#f5f3ff 0%,#ede9fe 55%,#faf5ff 55%,#faf5ff 100%)",
+        "color": "#4c1d95",
+        "border": "2px solid #7c3aed",
+        "borderRadius": "16px",
+        "padding": "16px",
+        "width": 380
+      },
+      "data": {
+        "title": "النطاق (Scope)",
+        "description": "حدود ما تعالجه حزمة المشكلة وما يتجاوزها.",
+        "inScope": [
+          "رهقة وأخطاء التسجيل الورقي اليومي",
+          "الديون في الاتجاهين: ما على العملاء وما على صاحب المتجر للمورّدين",
+          "وضوح المسدَّد من المتبقي عند كل تسديد",
+          "حسم الخلافات عند الخطأ بمرجع واضح بدل التقسيم العشوائي"
+        ],
+        "outScope": [
+          "إدارة المخزون والتلف (سؤال مفتوح — Q-6)",
+          "حساب الأرباح وتقارير المتجر المالية",
+          "أي جانب تنظيمي/قانوني للديون",
+          "تغيير طبيعة عمل المتجر نفسه (شراء/بيع)"
+        ],
+        "points": []
+      }
+    },
+    {
+      "id": "pd-signals-7",
+      "type": "pdCard",
+      "position": { "x": 980, "y": 980 },
+      "shape": "glow-ring",
+      "style": {
+        "background": "#f0fdfa",
+        "color": "#134e4a",
+        "border": "2px solid #0d9488",
+        "borderRadius": "24px",
+        "padding": "16px",
+        "width": 340,
+        "boxShadow": "0 0 0 5px rgba(13,148,136,0.12)"
+      },
+      "data": {
+        "title": "مؤشرات النجاح (Success Signals)",
+        "description": "مؤشرات قابلة للقياس؛ العتبات المعلَّمة [افتراض] تُعتمد نهائياً عند البوابة.",
+        "points": [
+          "SC-1: انخفاض رهقة التسجيل اليومي — القياس: تقدير زمني مقارن، العتبة: −50% [افتراض]",
+          "SC-2: انخفاض أخطاء التسجيل المكتشفة شهرياً — القياس: عدّ الأخطاء في مراجعة عيّنية، العتبة: تقارب الصفر [افتراض]",
+          "SC-3: كل طرف يعرف رصيده بلا مراجعة ورقية — القياس: عدد الاستفسارات المتكررة، العتبة: انخفاض ملموس [افتراض]",
+          "SC-4: وضوح المسدَّد/المتبقي لكل دَين — القياس: عيّنة تسويات شهرية، العتبة: 100% تطابق [افتراض]",
+          "SC-5: انخفاض خلافات تقسيم الخسارة بين الأطراف — القياس: سجل شهري للخلافات، العتبة: −80% [افتراض] [جديد بعد Q-3]"
+        ]
+      }
+    },
+    {
+      "id": "pd-unknowns-8",
+      "type": "pdCard",
+      "position": { "x": 980, "y": 1300 },
+      "shape": "haze-dotted",
+      "style": {
+        "background": "#f8fafc",
+        "color": "#334155",
+        "border": "2px dotted #64748b",
+        "borderRadius": "20px",
+        "padding": "16px",
+        "width": 360
+      },
+      "data": {
+        "title": "المجهول (Unknowns)",
+        "description": "ما لا نعرفه بعد. المحسوم بإجابات الإنسان موسوم ✅، والمفتوح مرتبط بسؤاله.",
+        "points": [
+          "U-1 ✅ [محسوم — Q-1]: الديون في الاتجاهين (عملاء ومورّدون)",
+          "U-2 ✅ [محسوم — Q-2]: ≈250 عميلاً مديناً و≈20 مورّداً",
+          "U-3 ✅ [محسوم — Q-3]: الخلافات عند الخطأ وتقسيم الخسارة بين الأطراف",
+          "U-4: من يتولى التسجيل ومن يُقرّ بالتسديد؟ (→ Q-4)",
+          "U-5: الميزانية والمدة المقبولة للانتقال عن الورق؟ (→ Q-5)",
+          "U-6: إزعاجات أخرى غير الديون؟ (→ Q-6)",
+          "U-7: وتيرة تسجيل ديون/تسديدات جديدة أسبوعياً؟ (→ استكمال Q-2)",
+          "U-8: التقدير المالي لخسائر الأخطاء عند تقسيمها؟ (→ استكمال Q-3)"
+        ]
+      }
+    },
+    {
+      "id": "pd-gate-9",
+      "type": "pdCard",
+      "position": { "x": 470, "y": 1620 },
+      "shape": "gateway-pill",
+      "style": {
+        "background": "linear-gradient(90deg,#111827 0%,#1f2937 100%)",
+        "color": "#f9fafb",
+        "border": "2px solid #f59e0b",
+        "borderRadius": "999px",
+        "padding": "20px 40px",
+        "width": 420,
+        "boxShadow": "0 0 28px rgba(245,158,11,0.35)"
+      },
+      "data": {
+        "title": "بوابة المشكلة (Problem Gate)",
+        "description": "القرار بيد الإنسان. الحزمة جاهزة: الحاجبة Q-1..Q-3 أُجيبت؛ Q-4..Q-6 مفتوحة وغير حاجبة.",
+        "gateStatus": "pending",
+        "points": []
+      }
+    }
+  ],
+  "edges": [
+    { "id": "e1", "source": "pd-summary-1", "target": "pd-actors-2", "style": { "stroke": "#312e81", "strokeWidth": 2.5 }, "markerEnd": { "type": "arrowclosed", "color": "#312e81" } },
+    { "id": "e2", "source": "pd-actors-2", "target": "pd-goals-3", "style": { "stroke": "#2563eb", "strokeWidth": 2 }, "markerEnd": { "type": "arrowclosed", "color": "#2563eb" } },
+    { "id": "e3", "source": "pd-actors-2", "target": "pd-pain-4", "animated": true, "style": { "stroke": "#dc2626", "strokeWidth": 2 }, "markerEnd": { "type": "arrowclosed", "color": "#dc2626" } },
+    { "id": "e4", "source": "pd-pain-4", "target": "pd-goals-3", "style": { "stroke": "#dc2626", "strokeWidth": 1.5, "strokeDasharray": "5 5" }, "markerEnd": { "type": "arrowclosed", "color": "#dc2626" } },
+    { "id": "e5", "source": "pd-pain-4", "target": "pd-constraints-5", "style": { "stroke": "#d97706", "strokeWidth": 2 }, "markerEnd": { "type": "arrowclosed", "color": "#d97706" } },
+    { "id": "e6", "source": "pd-pain-4", "target": "pd-scope-6", "style": { "stroke": "#dc2626", "strokeWidth": 2 }, "markerEnd": { "type": "arrowclosed", "color": "#dc2626" } },
+    { "id": "e7", "source": "pd-constraints-5", "target": "pd-scope-6", "style": { "stroke": "#d97706", "strokeWidth": 1.5, "strokeDasharray": "5 5" }, "markerEnd": { "type": "arrowclosed", "color": "#d97706" } },
+    { "id": "e8", "source": "pd-goals-3", "target": "pd-signals-7", "style": { "stroke": "#059669", "strokeWidth": 2 }, "markerEnd": { "type": "arrowclosed", "color": "#059669" } },
+    { "id": "e9", "source": "pd-pain-4", "target": "pd-unknowns-8", "style": { "stroke": "#64748b", "strokeWidth": 1.5, "strokeDasharray": "4 4" }, "markerEnd": { "type": "arrowclosed", "color": "#64748b" } },
+    { "id": "e10", "source": "pd-scope-6", "target": "pd-gate-9", "animated": true, "style": { "stroke": "#7c3aed", "strokeWidth": 2.5 }, "markerEnd": { "type": "arrowclosed", "color": "#7c3aed" } },
+    { "id": "e11", "source": "pd-signals-7", "target": "pd-gate-9", "animated": true, "style": { "stroke": "#0d9488", "strokeWidth": 2.5 }, "markerEnd": { "type": "arrowclosed", "color": "#0d9488" } },
+    { "id": "e12", "source": "pd-unknowns-8", "target": "pd-gate-9", "animated": true, "style": { "stroke": "#64748b", "strokeWidth": 2, "strokeDasharray": "6 5" }, "markerEnd": { "type": "arrowclosed", "color": "#64748b" } }
+  ]
+}
