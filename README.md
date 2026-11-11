@@ -1,21 +1,18 @@
-# my-office Setup Complete
+# my-office — مشاريع سيسو
 
-## Environment Initialization
+هذا الريبو يحمل **عدة مشاريع**، لكل مشروع مجلد خاص به. اعمل داخل مجلد مشروع مهمتك فقط.
 
-✅ Task: 00 · تجهيز البيئة (Environment Setup)
+| المجلد | المشروع | ما فيه |
+|---|---|---|
+| `POS/` | دفتر ديون المتجر (POS) | ملفات المراحل PD → S3، والكود في `POS/js/`، والقرارات، وأرشيف المحادثات |
+| `2026/` | مشروع 2026 | ملفات المراحل PD → S4، وتعليماته في `2026/CLAUDE.md` |
+| `gaza_alley_networks/` | شبكات الحواري — غزة | مراحل PD → S2 (مجلد لكل مرحلة) والقرارات |
+| `shabakat/` | شبكات | S1 |
+| `wifi-network-management/` | إدارة شبكات WiFi | PD |
+| `_legacy/` | قديم | ملفات المكتب الافتراضي السابق — لا تستخدمها |
 
-This repository has been initialized and is ready for Claude Code development.
-
-### Completed Steps:
-1. ✓ GitHub repository created and configured
-2. ✓ Main branch established
-3. ✓ Ready for local setup on Linux server
-
-### Next Steps (Manual):
-- Clone this repository: `git clone git@github.com:samshalayel/my-office.git`
-- Set ANTHROPIC_API_KEY environment variable
-- Run: `claude --model sonnet`
-- Verify: See 'Sonnet 5 · API Usage Billing' at the top
-
-**Setup Date**: 2026-09-20
-**Status**: Ready for trainee setup
+## قواعد
+1. **كل ملف يخص مشروعاً يُحفظ داخل مجلده:** `POS/POS_s3_skill_….md`، لا في جذر الريبو.
+2. **الكود** داخل مجلد المشروع (`POS/js/` لـ POS)، أو حيث يحدد `{PROJECT}_s4_repo_map` للمشروع.
+3. ملفات المراحل (PD → S6) مستندات معتمدة: لا تعدّلها أثناء تنفيذ مهمة برمجية.
+4. كل تغيير عبر فرع و Pull Request؛ الـ CI (`.github/workflows/ci.yml`) يفحص كل مشروع على حدة.
