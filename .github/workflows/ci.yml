@@ -1,0 +1,64 @@
+# CI لمشروع المنتج — يشتغل على كل PR (من الروبوتات أو البشر) وعلى كل دمج في main.
+# نتيجته تظهر في الـ PR، ويقرأها سيسو كدليل لمرحلتي S4 و S5.
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install dependencies (if the project has package.json)
+        run: |
+          if [ -f package.json ]; then
+            if [ -f package-lock.json ]; then npm ci; else npm install --no-audit --no-fund; fi
+          else
+            echo "no package.json — skipping"
+          fi
+
+      - name: Build (if a build script exists)
+        run: |
+          if [ -f package.json ] && node -e "process.exit(require('./package.json').scripts?.build ? 0 : 1)"; then
+            npm run build
+          else
+            echo "no build script — skipping"
+          fi
+
+      - name: TypeScript type check
+        run: |
+          FILES=$(git ls-files '*.ts' '*.tsx' | grep -v '\.d\.ts$' || true)
+          if [ -z "$FILES" ]; then echo "no TypeScript files"; exit 0; fi
+          if [ -f tsconfig.json ]; then
+            npx -y -p typescript@5.6.3 tsc --noEmit -p .
+          else
+            # بلا tsconfig: إعدادات صارمة معقولة لكود المتصفح الحديث
+            npx -y -p typescript@5.6.3 tsc --noEmit --strict --skipLibCheck \
+              --target es2022 --module esnext --moduleResolution bundler \
+              --lib es2022,dom,dom.iterable $FILES
+          fi
+
+      - name: Tests (npm test, or *.test.ts / *.spec.ts with node --test)
+        run: |
+          if [ -f package.json ] && node -e "process.exit(require('./package.json').scripts?.test ? 0 : 1)"; then
+            npm test
+          else
+            TESTS=$(git ls-files '*.test.ts' '*.spec.ts' '*.test.js' '*.spec.js' || true)
+            if [ -n "$TESTS" ]; then
+              npx -y tsx@4.19.2 --test $TESTS
+            else
+              echo "no tests yet — S5 will add them"
+            fi
+          fi
