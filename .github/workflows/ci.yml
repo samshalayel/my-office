@@ -37,18 +37,25 @@ jobs:
             echo "no build script — skipping"
           fi
 
-      - name: TypeScript type check
+      - name: TypeScript type check (each project folder on its own)
         run: |
-          FILES=$(git ls-files '*.ts' '*.tsx' | grep -v '\.d\.ts$' || true)
-          if [ -z "$FILES" ]; then echo "no TypeScript files"; exit 0; fi
-          if [ -f tsconfig.json ]; then
-            npx -y -p typescript@5.6.3 tsc --noEmit -p .
-          else
-            # بلا tsconfig: إعدادات صارمة معقولة لكود المتصفح الحديث
-            npx -y -p typescript@5.6.3 tsc --noEmit --strict --skipLibCheck \
-              --target es2022 --module esnext --moduleResolution bundler \
-              --lib es2022,dom,dom.iterable $FILES
-          fi
+          # مجلد لكل مشروع: يُفحص كل مشروع وحده، فخطأ في مشروع يظهر باسمه ولا يختلط بغيره
+          FAILED=""
+          DIRS=$(git ls-files '*.ts' '*.tsx' | grep -v '\.d\.ts$' | cut -d/ -f1 | sort -u)
+          [ -z "$DIRS" ] && { echo "no TypeScript files"; exit 0; }
+          for d in $DIRS; do
+            if [ -f "$d" ]; then FILES="$d"; else FILES=$(git ls-files "$d/*.ts" "$d/*.tsx" | grep -v '\.d\.ts$'); fi
+            echo "::group::type check: $d"
+            if [ -f "$d/tsconfig.json" ]; then
+              npx -y -p typescript@5.6.3 tsc --noEmit -p "$d" || FAILED="$FAILED $d"
+            else
+              npx -y -p typescript@5.6.3 tsc --noEmit --strict --skipLibCheck \
+                --target es2022 --module esnext --moduleResolution bundler \
+                --lib es2022,dom,dom.iterable $FILES || FAILED="$FAILED $d"
+            fi
+            echo "::endgroup::"
+          done
+          if [ -n "$FAILED" ]; then echo "::error::type errors in:$FAILED"; exit 1; fi
 
       - name: Tests (npm test, or *.test.ts / *.spec.ts with node --test)
         run: |
