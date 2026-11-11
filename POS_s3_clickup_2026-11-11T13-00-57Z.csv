@@ -1,4 +1,4 @@
-\uFEFFTask Name,Description,Status,Priority,Tags,List,Parent Task,Time Estimate,Assignee
+﻿Task Name,Description,Status,Priority,Tags,List,Parent Task,Time Estimate,Assignee
 "[base-T1] طبقة التخزين المحلية: LocalDatabase (IndexedDB) + LedgerStore والفهارس","بناء LocalDatabase فوق IndexedDB وتغليفها بمكوّن LedgerStore وحيد (ADR-2): مخزن accounts ومخزن entries بفهارس (بحساب / باليوم / بالاتجاه) لسرعة الاستجابة (SC-1) وحجم ~270 حساباً (SC-3).
 Refs: E-Account, E-Entry",to do,urgent,"POS,s3,slice-base",POS,,180,
 "[base-T2] هيكل PWA أوفلاين: AppShell + Service Worker","هيكل PWA أوفلاين-أولاً: AppShell للتنقل بين الدفترين واللوحة وسجل اليوم + Service Worker يعمل بلا اتصال من أول تشغيل — ADR-1 يوجب بناء SW من اليوم الأول لا كإضافة لاحقة؛ HR-1 يمنع أي استدعاء شبكة في مسار العرض؛ BR-7 يجعل الوظائف اليومية أوفلاين.
