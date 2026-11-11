@@ -1,0 +1,177 @@
+{
+  "nodes": [
+    {
+      "id": "group-s2-20261111-POS",
+      "type": "group",
+      "data": { "label": "S2 — Architecture" },
+      "position": { "x": 120, "y": 3300 },
+      "width": 1600,
+      "height": 1200,
+      "style": { "width": 1600, "height": 1200, "zIndex": -1 }
+    },
+    {
+      "id": "s2-stage-1",
+      "type": "s2-stage",
+      "data": {
+        "label": "Architecture Spine",
+        "description": "المعمارية المقترحة: PWA عميل واحد أوفلاين بلا خادم — السجل المصدر الوحيد والأرصدة تُحتسب منه دائماً",
+        "points": [
+          "التطبيق: PWA موبايل تعمل بالكامل على جهاز صاحب المتجر — بلا خادم ولا مزامنة ولا تسجيل دخول (K-4, K-1, NG-3, NG-4)",
+          "الطبقات: شاشات UI ← LedgerService (Logic) ← LedgerStore على IndexedDB (Data) — والقراءة تعود عبر BalanceEngine حصراً (BR-3, BR-6)",
+          "السجل append-only: كل حركة (دَين/تسديد/تصحيح/افتتاحي/نقدي) تُضاف ولا تُعدَّل ولا تُحذف (BR-2)",
+          "المكوّنات التسعة الرسمية: EntryScreen، AccountsDashboard، AccountLedgerView، DailyLogView، OpeningTransferScreen، LedgerService، BalanceEngine، LedgerStore، OfflineShell",
+          "تغطية الميزات: F-1..F-10 كلها مدعومة وكلها تعمل بلا اتصال (BR-7)",
+          "⚠ الأمن والتكلفة: بلا خادم لا توجد نسخ احتياطية سحابية — خطر فقدان الجهاز يُرفع قراراً بشرياً في Architecture Gate (ADR-1)"
+        ]
+      },
+      "position": { "x": 40, "y": 80 },
+      "width": 360,
+      "height": 260,
+      "parentId": "group-s2-20261111-POS",
+      "extent": "parent"
+    },
+    {
+      "id": "s2-domains-2",
+      "type": "s2-domains-node",
+      "data": {
+        "label": "Domain Model",
+        "description": "كيانان + حالة محسوبة: الحساب، الحركة، ورصيد لا يُخزَّن أبداً",
+        "points": [
+          "Account { id, name فريد, type: customer|supplier, transferStatus: pending|transferred, createdAt } — طرف الحساب في «ما لي» أو «ما عليّ»",
+          "Entry { id, kind: debt|payment|correction|opening|cash, accountId: UUID|null, amount>0, date, refEntryId?, note? } — الحركة الذرية المؤرخة؛ accountId=null فقط للنقدي (BR-8)",
+          "AccountBalance { totalDebt, totalPaid, remaining } — الثلاثية تُحتسب لحظياً من السجل حصراً، لا تُخزَّن ولا تُعدَّل يدوياً (BR-3, BR-6)",
+          "remaining سالب = رصيد معاكس يُعرض كما هو [افتراض مؤقت معتمد — س8-3 مفتوح] (BR-5)",
+          "العلاقات: الحساب 1←* الحركة؛ التصحيح يشير للأصل عبر refEntryId؛ النقل التدريجي يحرّك transferStatus حساباً حساباً (س8-2)"
+        ]
+      },
+      "position": { "x": 460, "y": 80 },
+      "width": 360,
+      "height": 260,
+      "parentId": "group-s2-20261111-POS",
+      "extent": "parent"
+    },
+    {
+      "id": "s2-components-3",
+      "type": "s2-components-node",
+      "data": {
+        "label": "System Components",
+        "description": "تسعة مكوّنات رسمية — أسماؤها المرجع الوحيد في S3/S4",
+        "points": [
+          "EntryScreen (UI): شاشة القيد الوحيدة — بيع بالأجل/شراء بأجل/تسديد/بيع نقدي، التاريخ الافتراضي اليوم، حفظ بأقل من دقيقة (F-1..F-4, F-10, SC-1)",
+          "AccountsDashboard (UI): «ما لي» (~250 عميلاً) و«ما عليّ» (~20 مورّداً) بأرصدة لحظية + بحث فوري (F-2, F-3, F-5, F-6)",
+          "AccountLedgerView (UI): الدليل — سجل الحساب بتواريخه والثلاثية، يُعرض للطرف من موبايل المالك عند الخلاف (F-4, F-7, SC-5)",
+          "DailyLogView (UI): سجل حركة اليوم — كل عمليات اليوم بما فيها النقدية بلا طرف (F-10, BR-8)",
+          "OpeningTransferScreen (UI): النقل التدريجي لأرصدة الدفتر القديم وإقفال الحساب عند اكتمال نقله (F-9, س8-2)",
+          "LedgerService (Logic): البوابة الوحيدة للكتابة — فحص ثم إضافة الحركة للسجل، بلا حساب ولا عرض (BR-1, BR-2, BR-8)",
+          "BalanceEngine (Logic): مصدر كل رقم معروض — يحسب الثلاثية والأرصدة من السجل حصراً (BR-3, BR-6)",
+          "LedgerStore (Data): IndexedDB — accounts + entries بنمط append-only، لا update ولا delete على الحركات (HR-3)",
+          "OfflineShell (Data): service worker + تخزين محلي كامل — التطبيق يعمل بلا شبكة بعد أول فتح (F-8, BR-7)"
+        ]
+      },
+      "position": { "x": 880, "y": 80 },
+      "width": 360,
+      "height": 300,
+      "parentId": "group-s2-20261111-POS",
+      "extent": "parent"
+    },
+    {
+      "id": "s2-interactions-4",
+      "type": "s2-interactions-node",
+      "data": {
+        "label": "Component Interactions",
+        "description": "سير حركة واحدة: شاشة ← خدمة ← مخزن ← محسوب ← شاشة",
+        "points": [
+          "EntryScreen → LedgerService: حركة جديدة بنوعها الصريح (نقدي/أجل) وطرفها ومبلغها وتاريخ اليوم افتراضياً (C-1)",
+          "LedgerService → LedgerStore: كتابة الحركة append-only بعد اجتياز الفحص (C-1, HR-3)",
+          "AccountsDashboard → EntryScreen: فتح القيد بحساب جاهز من نتائج البحث (C-7)",
+          "OpeningTransferScreen → LedgerService: قيد افتتاحي لحساب واحد وإقفال نقله عند الاكتمال (C-8, C-9)",
+          "LedgerStore → BalanceEngine: قراءة السجل عند كل تغيّر — الرصيد يُشتق ولا يُخزَّن (HR-2)",
+          "BalanceEngine → AccountsDashboard / AccountLedgerView / DailyLogView: الأرصدة والثلاثية وسجل الحساب وحركات اليوم (C-4, C-5, C-6)",
+          "AccountLedgerView → LedgerService: طلب تصحيح حركة كعملية جديدة مرئية بلا محو (C-3, BR-2)"
+        ]
+      },
+      "position": { "x": 40, "y": 420 },
+      "width": 380,
+      "height": 300,
+      "parentId": "group-s2-20261111-POS",
+      "extent": "parent"
+    },
+    {
+      "id": "s2-data-5",
+      "type": "s2-data-domains-node",
+      "data": {
+        "label": "Data Domains",
+        "description": "مخزن محلي واحد على جهاز المالك — append-only والأرصدة مشتقة",
+        "points": [
+          "Storage: IndexedDB داخل متصفح موبايل المالك — بلا خادم ولا مزامنة ولا حسابات دخول (K-1, NG-4, HR-5)",
+          "المخازن: accounts (مفتاح id، فهرس فريد name) وentries (مفتاح id، فهرس accountId+date، فهرس date)",
+          "Operations: create فقط للحركات؛ الحقل الوحيد القابل للتحديث في accounts هو transferStatus — لا update/delete للحركات إطلاقاً (HR-3)",
+          "Constraint: الرصيد لا يُخزَّن إطلاقاً — يُحتسب لحظياً عند كل عرض عبر BalanceEngine (BR-3, BR-6)",
+          "Key Pattern: UUID لكل سجل؛ سجل الحساب بترتيب date تصاعدي؛ حركة اليوم بفهرس date",
+          "التقدير الحجمي: ~270 حساباً وحركات يومية — داخل حدود IndexedDB بسهولة [افتراض حجمي — لا رقم من S1]"
+        ]
+      },
+      "position": { "x": 480, "y": 420 },
+      "width": 360,
+      "height": 300,
+      "parentId": "group-s2-20261111-POS",
+      "extent": "parent"
+    },
+    {
+      "id": "s2-constraints-6",
+      "type": "s2-constraints-node",
+      "data": {
+        "label": "Tech Constraints",
+        "description": "قواعد صارمة قابلة للفحص نعم/لا — تُقاس على كل ناتج لاحق",
+        "points": [
+          "HR-1: لا قيد دَين أو تسديد بلا حساب طرف — الاستثناء الوحيد البيع النقدي (BR-1, BR-8)",
+          "HR-2: كل رقم معروض يُحتسب من السجل حصراً — لا تخزين ولا تعديل يدوي للأرصدة (BR-3, BR-6)",
+          "HR-3: الحركات append-only — التصحيح حركة جديدة مرئية، لا محو صامت (BR-2)",
+          "HR-4: كل الوظائف اليومية (قيد/تسديد/عرض/تصحيح/نقل/نقدي) تعمل أوفلاين كاملاً (BR-7, K-4)",
+          "HR-5: مستخدم واحد — بلا تسجيل دخول ولا حسابات ولا صلاحيات لغير صاحب المتجر (NG-3, K-2)",
+          "HR-6: لا خادم ولا مزامنة ولا تكلفة تشغيل — أي مكتبة تتطلب backend ممنوعة (NG-4, K-1)",
+          "HR-7: نوع الحركة (نقدي/أجل) صريح إلزامي — البيع النقدي لا يمس أي رصيد ولا يدخل دفتر الديون (BR-8)",
+          "HR-8: التسديد الزائد يُقبل كرصيد معاكس [افتراض س8-3] — والمعمارية تسمح بتبديله بقرار لاحق بلا إعادة تصميم (BR-5)"
+        ]
+      },
+      "position": { "x": 900, "y": 420 },
+      "width": 360,
+      "height": 260,
+      "parentId": "group-s2-20261111-POS",
+      "extent": "parent"
+    },
+    {
+      "id": "s2-gate-7",
+      "type": "gate-architecture",
+      "data": {
+        "label": "Architecture Gate ⛔",
+        "description": "بوابة المعمارية — يجب موافقة إنسان على القرارات التقنية",
+        "gateStatus": "pending",
+        "decisionAuthority": "Human",
+        "gateChecklist": [
+          "Domain Model واضح ومتوافق مع PD/S0",
+          "Components محددة بمسؤولياتها",
+          "Interactions واضحة — كل سهم له معنى",
+          "Data Model يدعم كل الـ use cases من S1",
+          "Tech Constraints متوافقة مع القيود من PD"
+        ]
+      },
+      "position": { "x": 400, "y": 820 },
+      "width": 600,
+      "height": 200,
+      "parentId": "group-s2-20261111-POS",
+      "extent": "parent"
+    }
+  ],
+  "edges": [
+    { "id": "e-s2-stage-domains", "type": "custom", "source": "s2-stage-1", "target": "s2-domains-2" },
+    { "id": "e-s2-domains-components", "type": "custom", "source": "s2-domains-2", "target": "s2-components-3" },
+    { "id": "e-s2-components-interactions", "type": "custom", "source": "s2-components-3", "target": "s2-interactions-4" },
+    { "id": "e-s2-stage-data", "type": "custom", "source": "s2-stage-1", "target": "s2-data-5" },
+    { "id": "e-s2-data-constraints", "type": "custom", "source": "s2-data-5", "target": "s2-constraints-6" },
+    { "id": "e-s2-interactions-gate", "type": "custom", "source": "s2-interactions-4", "target": "s2-gate-7" },
+    { "id": "e-s2-constraints-gate", "type": "custom", "source": "s2-constraints-6", "target": "s2-gate-7" }
+  ],
+  "evidence": [],
+  "exportedAt": "2026-11-11T12:03:05.000Z"
+}
