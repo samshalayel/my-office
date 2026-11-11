@@ -83,7 +83,8 @@ jobs:
             # نشر ذرّي: مجلد جديد ثم تبديل الرابط — لا لحظة يكون فيها الموقع نصف منشور
             REL=$ROOT/releases/${{ github.sha }}; mkdir -p "$REL"
             tar -xzf /tmp/pos-deploy-staging/site.tar.gz -C "$REL" && rm -rf /tmp/pos-deploy-staging
-            ln -sfn "$REL" "$ROOT/current"
+            # رابط نسبي: داخل حاوية nginx المجلد مركّب على /site، فالمسار المطلق للسيرفر لا يوجد هناك
+            ln -sfn "releases/${{ github.sha }}" "$ROOT/current"
             ls -1dt $ROOT/releases/* | tail -n +6 | xargs -r rm -rf   # آخر 5 نسخ للتراجع
             # حاوية nginx خلف Traefik (تُنشأ مرة واحدة)
             if ! docker ps -a --format '{{.Names}}' | grep -qx "$NAME"; then
@@ -130,7 +131,8 @@ jobs:
             NAME=pos; HOST=pos.sillar.us; ROOT=/srv/sites/$NAME
             REL=$ROOT/releases/${{ github.sha }}; mkdir -p "$REL"
             tar -xzf /tmp/pos-deploy-prod/site.tar.gz -C "$REL" && rm -rf /tmp/pos-deploy-prod
-            ln -sfn "$REL" "$ROOT/current"
+            # رابط نسبي: داخل حاوية nginx المجلد مركّب على /site، فالمسار المطلق للسيرفر لا يوجد هناك
+            ln -sfn "releases/${{ github.sha }}" "$ROOT/current"
             ls -1dt $ROOT/releases/* | tail -n +11 | xargs -r rm -rf   # آخر 10 نسخ للتراجع
             if ! docker ps -a --format '{{.Names}}' | grep -qx "$NAME"; then
               docker run -d --name "$NAME" --restart unless-stopped --network web \

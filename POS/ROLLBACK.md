@@ -5,7 +5,7 @@
 
 ```bash
 ls -1t /srv/sites/pos/releases/          # النسخ المتاحة (الأحدث أولاً) — اسم كل مجلد = رقم الـ commit
-ln -sfn /srv/sites/pos/releases/<COMMIT> /srv/sites/pos/current
+cd /srv/sites/pos && ln -sfn releases/<COMMIT> current   # رابط نسبي (الحاوية تراه تحت /site)
 ```
 الأثر فوري (nginx يخدم ما يشير له `current`). للـ staging: نفس الأوامر مع `pos-staging`.
 
