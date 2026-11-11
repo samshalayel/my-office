@@ -1,1 +1,4 @@
-STATUS: BLOCKED — نفّذ المهمة السابقة أولًا
+STATUS: COMPLETE
+Date: 2026-11-11T14:52:58.185Z
+File: js/csv-exporter.ts
+Commit: 048aaea3d1ba35a38f51e81e211de0c96fd971ba
