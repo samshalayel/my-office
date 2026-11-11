@@ -1,0 +1,485 @@
+{
+  "nodes": [
+    {
+      "id": "group-s3-20261111-POS",
+      "type": "group",
+      "data": { "label": "S3 — Slices & Tasks" },
+      "position": { "x": 120, "y": 4600 },
+      "width": 1800,
+      "height": 2420,
+      "style": { "width": 1800, "height": 2420, "zIndex": -1 }
+    },
+    {
+      "id": "s3-stage-1",
+      "type": "s3-stage",
+      "data": {
+        "label": "Slice Strategy",
+        "description": "قرار: تقسيم متعدد الشرائح — شريحة أساس إلزامية ثم شرائح عمودية قابلة للتسليم end-to-end",
+        "points": [
+          "القالب: Multi-Slice — 5 شرائح عمودية على قالب أساس إلزامي (القرار موثق في Playbook §1)",
+          "Foundation = base: التخزين المحلي + CRUD الحسابات + بنود الأساس المنطبقة BASE-5/7/8/9/10/11 + هيكل PWA أوفلاين — كل شرائح الألم تقف عليه",
+          "المفتاح المشترك بين الشرائح: سجل العمليات append-only عبر LedgerStore حصراً — كل شريحة تقرأ/تكتب من خلاله (BR-2, BR-6)",
+          "5 شرائح: base → (entry ∥ calc) → views → migr — لا تبعيات دائرية",
+          "بوابة واحدة s3-gate-7 تغطي كل الشرائح — المهام الحرجة معلّمة 👤: base-T14, entry-T1, entry-T2, calc-T1, migr-T1",
+          "شرط الدخول تحقق: s2-gate-7 معتمدة من الإنسان وفق سجل بوابة SFM (كل البطاقات Pass 6/6 — 2026-11-11) ووثيقة سجل الاعتماد المرفقة مع هذه الحزمة"
+        ]
+      },
+      "position": { "x": 40, "y": 80 },
+      "width": 360,
+      "height": 240,
+      "parentId": "group-s3-20261111-POS",
+      "extent": "parent"
+    },
+    {
+      "id": "s3-slice-base",
+      "type": "s3-slice-node",
+      "data": {
+        "label": "Slice: base (Foundation)",
+        "description": "طبقة الأساس الإلزامية — التخزين والحسابات وبنود الأساس وهيكل PWA أوفلاين",
+        "points": [
+          "يعتمد على: — (Foundation)",
+          "المكونات: LocalDatabase + LedgerStore (Data) + AppShell (UI) — من القائمة الرسمية s2-components-3",
+          "الكيانات: E-Account (CRUD كامل بلا حذف نهائي — الأرشفة بدل الحذف) + E-Entry (كتابة append-only وقراءة فقط — BR-2)",
+          "بنود الأساس المنطبقة: BASE-5, BASE-7, BASE-8, BASE-9, BASE-10, BASE-11 — غير المنطبق موثق بأسبابه في Playbook §1",
+          "تسليم الشريحة: إدارة حسابات كاملة وإعدادات وتصدير/نسخ احتياطي وهيكل يعمل أوفلاين — بلا أي شاشة عمليات بعد"
+        ]
+      },
+      "position": { "x": 40, "y": 400 },
+      "width": 360,
+      "height": 240,
+      "parentId": "group-s3-20261111-POS",
+      "extent": "parent"
+    },
+    {
+      "id": "s3-contract-base",
+      "type": "s3-contract-node",
+      "data": {
+        "label": "Contracts: base",
+        "description": "قيود الكيانات من s2-domains-2 حرفياً — تواقيع العقود من مصدر الحقيقة",
+        "points": [
+          "التخزين: LocalDatabase (IndexedDB) خلف LedgerStore حصراً (ADR-2) — مخزنان accounts وentries بفهارس (بحساب / باليوم) لسرعة SC-1 وحجم SC-3",
+          "Account {id, name, side, ledgerTransfer, createdAt} حرفياً من S2 — الاسم فريد داخل side وside ثابت بعد الإنشاء",
+          "Entry {id, type, accountId?, amount, ts, note?, linkedTo?} حرفياً من S2 — accountId إلزامي لكل الأنواع إلا cash_sale (BR-1, BR-8) ولا تعديل ولا حذف بعد الكتابة (BR-2)",
+          "حقول قياسية على كل سجل: createdAt, createdBy, updatedAt, updatedBy, archived_at (للحسابات)",
+          "ملاحظة: تواقيع عقود الكيانات تُنسخ حرفياً من POS_s2_api_contract_2026-11-11T12-19-24Z.md (مصدر الحقيقة) — لا تُعاد صياغتها هنا"
+        ]
+      },
+      "position": { "x": 460, "y": 400 },
+      "width": 360,
+      "height": 260,
+      "parentId": "group-s3-20261111-POS",
+      "extent": "parent"
+    },
+    {
+      "id": "s3-data-base",
+      "type": "s3-data-model-node",
+      "data": {
+        "label": "Data: base",
+        "description": "نمط التخزين الأساسي الذي تبني عليه كل الشرائح",
+        "points": [
+          "IndexedDB: مخزن accounts (فهرس side + name + archived) ومخزن entries (فهرس accountId + ts + type)",
+          "لا رصيد يُخزَّن كمصدر حقيقة — كل قراءة للأرصدة عبر BalanceCalculator (ADR-3, BR-3, BR-6)",
+          "الإعدادات (BASE-8): كائن واحد — اسم المتجر، العملة، صيغ الأرقام والتواريخ",
+          "النسخة الاحتياطية (BASE-7): تصدير JSON كامل للسجل + استعادة على قاعدة فارغة فقط — بلا خادم"
+        ]
+      },
+      "position": { "x": 880, "y": 400 },
+      "width": 360,
+      "height": 260,
+      "parentId": "group-s3-20261111-POS",
+      "extent": "parent"
+    },
+    {
+      "id": "s3-tasks-base",
+      "type": "s3-task-plan-node",
+      "data": {
+        "label": "Tasks: base",
+        "description": "14 مهمة — مطابقة حرفياً لمصدر الحقيقة POS_s3_clickup_2026-11-11T13-00-57Z.csv",
+        "points": [
+          "[base-T1] طبقة التخزين المحلية: LocalDatabase (IndexedDB) + LedgerStore والفهارس",
+          "[base-T2] هيكل PWA أوفلاين: AppShell + Service Worker",
+          "[base-T3] Account: إضافة حساب بتحقق كامل",
+          "[base-T4] Account: قائمة ببحث وفلترة وترتيب",
+          "[base-T5] Account: عرض تفاصيل الحساب",
+          "[base-T6] Account: تعديل الاسم بتحقق — side ثابت",
+          "[base-T7] Account: أرشفة واسترجاع بدل الحذف",
+          "[base-T8] Entry: كتابة append-only واستعلام بحساب وباليوم",
+          "[base-T9] BASE-8: الإعدادات — الاسم والعملة وصيغ الأرقام",
+          "[base-T10] BASE-5: تصدير CSV للقوائم",
+          "[base-T11] BASE-7: نسخة احتياطية محلية واستعادة",
+          "[base-T12] BASE-9: واجهة عربية أولاً RTL",
+          "[base-T13] BASE-10: معالجة أخطاء موحدة",
+          "[base-T14] 👤 BASE-11: الأمان الأساسي"
+        ]
+      },
+      "position": { "x": 1300, "y": 400 },
+      "width": 360,
+      "height": 300,
+      "parentId": "group-s3-20261111-POS",
+      "extent": "parent"
+    },
+    {
+      "id": "s3-slice-entry",
+      "type": "s3-slice-node",
+      "data": {
+        "label": "Slice: entry",
+        "description": "مسار كتابة العملية الواحدة — من النموذج إلى السجل عبر العقد C-1",
+        "points": [
+          "يعتمد على: base — التخزين والهيكل جاهزان",
+          "المكونات: QuickEntryForm (UI) + EntryValidator (Logic) — من القائمة الرسمية",
+          "العقود: C-1 addEntry — التوقيع الحرفي من S2 Contract",
+          "المبدأ: تحقق قبل الكتابة، وكتابة append-only عبر LedgerStore فقط (HR-3, HR-4, HR-5)",
+          "تسليم الشريحة: تسجيل أي عملية من الأنواع الستة بأقل من دقيقة — أوفلاين بالكامل (BR-7, HR-1)"
+        ]
+      },
+      "position": { "x": 40, "y": 740 },
+      "width": 360,
+      "height": 240,
+      "parentId": "group-s3-20261111-POS",
+      "extent": "parent"
+    },
+    {
+      "id": "s3-contract-entry",
+      "type": "s3-contract-node",
+      "data": {
+        "label": "Contracts: entry",
+        "description": "العقد المحوري C-1 — منسوخ حرفياً من S2",
+        "points": [
+          "C-1: addEntry(entry: NewEntry) → EntryResult — التوقيع حرفياً من POS_s2_api_contract_2026-11-11T12-19-24Z.md",
+          "الطبقة: UI-event (QuickEntryForm) → Logic (EntryValidator) → Data (LedgerStore → LocalDatabase)",
+          "سلوك الاحتساب: debt_* يزيد، payment_* ينقص، cash_sale لا يمس أي رصيد (BR-8)، opening رصيد ابتدائي لحساب أثناء النقل (F-9)",
+          "حالات الفشل: نوع مفقود → «نوع القيد مطلوب»؛ طرف مفقود لنوع غير cash_sale → «حساب الطرف مطلوب» (BR-1, BR-8)؛ مبلغ ≤ 0 → «المبلغ يجب أن يكون أكبر من صفر»",
+          "التسديد الزائد عن الرصيد ليس فشلاً — يُقبل ويُعرض كقيمة معاكسة (BR-5, HR-10)"
+        ]
+      },
+      "position": { "x": 460, "y": 740 },
+      "width": 360,
+      "height": 260,
+      "parentId": "group-s3-20261111-POS",
+      "extent": "parent"
+    },
+    {
+      "id": "s3-data-entry",
+      "type": "s3-data-model-node",
+      "data": {
+        "label": "Data: entry",
+        "description": "بيانات مسار الكتابة",
+        "points": [
+          "المدخل: NewEntry {type, accountId?, amount, ts?, note?} — ts الافتراضي لحظة التسجيل",
+          "المخرج: EntryResult {ok, entry?, errors?} — رسائل الأخطاء بالعربية من EntryValidator",
+          "الكتابة: إلحاق سجل Entry واحد في مخزن entries عبر LedgerStore — لا تحديث ولا حذف (HR-3, BR-2)",
+          "التصحيح: عملية جديدة ترتبط بالأصل عبر linkedTo — الأصل يبقى ظاهراً (BR-2, ADR-4)"
+        ]
+      },
+      "position": { "x": 880, "y": 740 },
+      "width": 360,
+      "height": 260,
+      "parentId": "group-s3-20261111-POS",
+      "extent": "parent"
+    },
+    {
+      "id": "s3-tasks-entry",
+      "type": "s3-task-plan-node",
+      "data": {
+        "label": "Tasks: entry",
+        "description": "3 مهام — مطابقة حرفياً للـ CSV",
+        "points": [
+          "[entry-T1] 👤 EntryValidator: التحقق الكامل قبل الكتابة",
+          "[entry-T2] 👤 تنفيذ عقد C-1 addEntry كاملاً",
+          "[entry-T3] QuickEntryForm: إدخال عملية بأقل من دقيقة"
+        ]
+      },
+      "position": { "x": 1300, "y": 740 },
+      "width": 360,
+      "height": 260,
+      "parentId": "group-s3-20261111-POS",
+      "extent": "parent"
+    },
+    {
+      "id": "s3-slice-calc",
+      "type": "s3-slice-node",
+      "data": {
+        "label": "Slice: calc",
+        "description": "محرّك الاحتساب — كل رقم يُحتسب من السجل لحظياً",
+        "points": [
+          "يعتمد على: base — قراءة عمليات الحساب عبر LedgerStore",
+          "المكونات: BalanceCalculator (Logic) — من القائمة الرسمية",
+          "العقود: C-3 ملخص الحساب — الأنواع AccountSummary وAccountRow معرفة حرفياً في S2",
+          "المبدأ: الثلاثية totalDebt/totalPaid/balance محسوبة لا مخزنة (BR-3, BR-4, BR-6, ADR-3)",
+          "تسليم الشريحة: ملخص صحيح لأي حساب — بما فيه القيمة المعاكسة عند التسديد الزائد (BR-5)"
+        ]
+      },
+      "position": { "x": 40, "y": 1080 },
+      "width": 360,
+      "height": 240,
+      "parentId": "group-s3-20261111-POS",
+      "extent": "parent"
+    },
+    {
+      "id": "s3-contract-calc",
+      "type": "s3-contract-node",
+      "data": {
+        "label": "Contracts: calc",
+        "description": "عقد C-3 — أنواعه حرفياً من S2 وسلوكه من سلوك C-1 الموثق",
+        "points": [
+          "C-3 (موروث): الاستعلام «بحساب» يرجع AccountSummary {account, summary: DerivedBalance, entries بالترتيب الزمني مع علامات «مُصحّح»} — النوع حرفياً من S2",
+          "سلوك الاحتساب (حرفياً من C-1): debt_* يزيد totalDebt، payment_* يزيد totalPaid، cash_sale لا يمس، opening رصيد ابتدائي أثناء النقل",
+          "قاعدة اللا-عدّ المزدوج: التسديد يُنسب لعملته مرة واحدة — المتبقي يُطرح لا المبلغ الكامل، والرصيد يتسق بعد كل كتابة: جزئي / كامل / زائد (BR-5)",
+          "مثال رقمي: حساب عليه 5000، سدد 3000 ثم 2500 → totalDebt=5000، totalPaid=5500، balance=−500 قيمة معاكسة مقبولة (BR-5, HR-10)",
+          "العلامة «مُصحّح»: كل entry له linkedTo يُعرض مرتبطاً بأصله — الأصل لا يُخفى (BR-2, ADR-4, SC-5)"
+        ]
+      },
+      "position": { "x": 460, "y": 1080 },
+      "width": 360,
+      "height": 260,
+      "parentId": "group-s3-20261111-POS",
+      "extent": "parent"
+    },
+    {
+      "id": "s3-data-calc",
+      "type": "s3-data-model-node",
+      "data": {
+        "label": "Data: calc",
+        "description": "مشتقات الاحتساب — لا تخزين لأرقام عرض",
+        "points": [
+          "DerivedBalance {totalDebt, totalPaid, balance} — مشتق يُعاد بناؤه كلياً من السجل (ADR-3)",
+          "المسح: عمليات الحساب بترتيب ts — إجمالي الدَّين من debt_* وopening الابتدائي، وإجمالي المسدَّد من payment_*",
+          "يجوز مسودة محسوبة للعرض شرط إمكانية إعادة بنائها كلياً من السجل (ADR-3)",
+          "مصدر القراءة الوحيد: LedgerStore — لا وصول مباشر لـ IndexedDB ولا أي استدعاء شبكة (HR-1)"
+        ]
+      },
+      "position": { "x": 880, "y": 1080 },
+      "width": 360,
+      "height": 260,
+      "parentId": "group-s3-20261111-POS",
+      "extent": "parent"
+    },
+    {
+      "id": "s3-tasks-calc",
+      "type": "s3-task-plan-node",
+      "data": {
+        "label": "Tasks: calc",
+        "description": "مهمتان — مطابقة حرفياً للـ CSV",
+        "points": [
+          "[calc-T1] 👤 BalanceCalculator: احتساب الثلاثية من السجل",
+          "[calc-T2] تنفيذ عقد C-3: ملخص الحساب AccountSummary"
+        ]
+      },
+      "position": { "x": 1300, "y": 1080 },
+      "width": 360,
+      "height": 220,
+      "parentId": "group-s3-20261111-POS",
+      "extent": "parent"
+    },
+    {
+      "id": "s3-slice-views",
+      "type": "s3-slice-node",
+      "data": {
+        "label": "Slice: views",
+        "description": "شاشات العرض — الدليل أمام الخلاف وسجل اليوم",
+        "points": [
+          "يعتمد على: base + calc + entry — عرض حي من السجل بلا أي حساب ذاتي في الواجهة",
+          "المكونات: AccountsDashboard + AccountLedgerView + DayLedgerView (UI) — من القائمة الرسمية",
+          "العقود: C-3 للوحتَي الحسابات والحساب، C-7 لسجل اليوم",
+          "المبدأ: الواجهة تعرض مخرجات العقود فقط — لا تحسب رصيداً بنفسها (BR-6)",
+          "تسليم الشريحة: لوحة الدفترين + شاشة الطرف كدليل (SC-5) + سجل حركة اليوم (F-10)"
+        ]
+      },
+      "position": { "x": 40, "y": 1420 },
+      "width": 360,
+      "height": 240,
+      "parentId": "group-s3-20261111-POS",
+      "extent": "parent"
+    },
+    {
+      "id": "s3-contract-views",
+      "type": "s3-contract-node",
+      "data": {
+        "label": "Contracts: views",
+        "description": "استهلاك C-3 وتنفيذ استعلام C-7 — أنواع العرض حرفياً من S2",
+        "points": [
+          "C-3 (موروث): اللوحة تستهلك AccountRow لكل حساب — {accountId, name, side, balance, summary, ledgerTransfer} النوع حرفياً من S2",
+          "C-7 (موروث): الاستعلام «باليوم» — عمليات اليوم ts ∈ [00:00, 24:00) بالترتيب الزمني (F-10) — DayLogRow {entryId, ts, type, label, amount, accountId?} حرفياً من S2",
+          "بحث اللوحة (F-6): فلترة محلية على الاسم داخل side — بلا شبكة (HR-1)",
+          "شاشة الطرف كدليل (F-7, SC-5): الثلاثية + الحركات المؤرّخة + علامات التصحيح — لا تعديل من الشاشة",
+          "حالات الحافة: حساب بلا عمليات → أصفار؛ يوم بلا عمليات → قائمة فارغة برسالة مفهومة (BASE-10)"
+        ]
+      },
+      "position": { "x": 460, "y": 1420 },
+      "width": 360,
+      "height": 260,
+      "parentId": "group-s3-20261111-POS",
+      "extent": "parent"
+    },
+    {
+      "id": "s3-data-views",
+      "type": "s3-data-model-node",
+      "data": {
+        "label": "Data: views",
+        "description": "بيانات العرض — كلها مشتقة من السجل",
+        "points": [
+          "اللوحة: قائمة الحسابات من [base-T4] + الثلاثية من [calc-T1] لكل حساب — مسودة عرض قابلة لإعادة البناء (ADR-3)",
+          "سجل الحساب: AccountSummary.entries كما يرجعها C-3 — بلا فرز أو فلترة تغيّر ترتيب الدليل",
+          "سجل اليوم: نطاق اليوم بتوقيت الجهاز المحلي + label عربي لكل EntryType كما في توثيق الأنواع في S2",
+          "التنقل: AppShell من [base-T2] يستضيف الشاشات — الدفتران واللوحة وسجل اليوم"
+        ]
+      },
+      "position": { "x": 880, "y": 1420 },
+      "width": 360,
+      "height": 260,
+      "parentId": "group-s3-20261111-POS",
+      "extent": "parent"
+    },
+    {
+      "id": "s3-tasks-views",
+      "type": "s3-task-plan-node",
+      "data": {
+        "label": "Tasks: views",
+        "description": "3 مهام — مطابقة حرفياً للـ CSV",
+        "points": [
+          "[views-T1] AccountsDashboard: الدفتران بأرصدة لحظية + بحث",
+          "[views-T2] AccountLedgerView: شاشة الطرف كدليل",
+          "[views-T3] DayLedgerView وعقد C-7: سجل حركة اليوم"
+        ]
+      },
+      "position": { "x": 1300, "y": 1420 },
+      "width": 360,
+      "height": 260,
+      "parentId": "group-s3-20261111-POS",
+      "extent": "parent"
+    },
+    {
+      "id": "s3-slice-migr",
+      "type": "s3-slice-node",
+      "data": {
+        "label": "Slice: migr",
+        "description": "النقل التدريجي من الدفتر الورقي — قرار س8-2",
+        "points": [
+          "يعتمد على: entry + base — القيد الافتتاحي يُكتب عبر C-1 وحسابه موجود مسبقاً",
+          "المكونات: OpeningMigrationPanel (UI) — من القائمة الرسمية",
+          "العقود: C-1 بنوع opening — التوقيع حرفياً من S2",
+          "المبدأ: نقل حساب-حساب، والحساب يُقفل بـ ledgerTransfer: completed عند اكتمال نقله — القفل لا يمنع أي عملية لاحقة (س8-2)",
+          "تسليم الشريحة: رصيد افتتاحي موثق لكل حساب يُنقل — بلا تعديل على أي رصيد سابق"
+        ]
+      },
+      "position": { "x": 40, "y": 1760 },
+      "width": 360,
+      "height": 240,
+      "parentId": "group-s3-20261111-POS",
+      "extent": "parent"
+    },
+    {
+      "id": "s3-contract-migr",
+      "type": "s3-contract-node",
+      "data": {
+        "label": "Contracts: migr",
+        "description": "C-1 بنوع opening — التوقيع حرفياً من S2",
+        "points": [
+          "C-1 (موروث) بنوع opening: addEntry({type: 'opening', accountId, amount}) → رصيد ابتدائي لحساب أثناء النقل (F-9, س8-2)",
+          "القيد الافتتاحي عملية عادية في السجل: مؤرّخة، تُصحَّح بقيد عكسي عبر linkedTo — لا تعديل ولا حذف (BR-2)",
+          "إقفال النقل: ledgerTransfer ينتقل open → completed لكل حساب اكتمل نقله — لا يمنع أي عملية لاحقة (س8-2)",
+          "حالات الحافة: حساب بلا رصيد → يُقفل بلا قيد افتتاحي؛ قيد افتتاحي خاطئ → قيد عكسي جديد والأصل يبقى ظاهراً (BR-2, ADR-4)"
+        ]
+      },
+      "position": { "x": 460, "y": 1760 },
+      "width": 360,
+      "height": 260,
+      "parentId": "group-s3-20261111-POS",
+      "extent": "parent"
+    },
+    {
+      "id": "s3-data-migr",
+      "type": "s3-data-model-node",
+      "data": {
+        "label": "Data: migr",
+        "description": "بيانات النقل — بلا بنى خاصة",
+        "points": [
+          "حقل ledgerTransfer على Account: 'open' | 'completed' — يُقفل عند اكتمال النقل فقط (س8-2)",
+          "القيد الافتتاحي Entry عادي في مخزن entries — لا بنية تخزين خاصة",
+          "تتبع النقل: قائمة الحسابات تعرض ledgerTransfer لكل حساب — الحقل موجود في AccountRow حرفياً من S2"
+        ]
+      },
+      "position": { "x": 880, "y": 1760 },
+      "width": 360,
+      "height": 220,
+      "parentId": "group-s3-20261111-POS",
+      "extent": "parent"
+    },
+    {
+      "id": "s3-tasks-migr",
+      "type": "s3-task-plan-node",
+      "data": {
+        "label": "Tasks: migr",
+        "description": "مهمة واحدة — مطابقة حرفياً للـ CSV",
+        "points": [
+          "[migr-T1] 👤 OpeningMigrationPanel: قيد افتتاحي وإقفال النقل"
+        ]
+      },
+      "position": { "x": 1300, "y": 1760 },
+      "width": 360,
+      "height": 220,
+      "parentId": "group-s3-20261111-POS",
+      "extent": "parent"
+    },
+    {
+      "id": "s3-gate-7",
+      "type": "gate-slice",
+      "data": {
+        "label": "Slice Gate",
+        "description": "بوابة شرائح S3 — قرار الإنسان وحده",
+        "points": [
+          "بوابة واحدة تغطي الشرائح الخمس",
+          "gateStatus يبقى pending في هذا الملف بحسب البروتوكول — الاعتماد يوثق بقرار إنساني",
+          "سجل المراجعة: بطاقات SFM (Pass 6/6) + وثيقة سجل الاعتماد المرفقة مع الحزمة"
+        ],
+        "gateChecklist": [
+          "كل شريحة عمودية تُسلّم قيمة end-to-end — Foundation واحدة واضحة بلا تبعيات دائرية",
+          "المطابقة الحرفية بين JSON والـ CSV: 23 مهمة بنفس العدد والترتيب والأسماء",
+          "كل مهمة في شرائح الألم تُتتبَّع إلى عقد وقواعد موجودة في S2 (C-1/C-3/C-7, HR, BR) ومهام الأساس إلى E-Account/E-Entry/BASE-N/ACTOR",
+          "التواقيع منسوخة من مصدر الحقيقة POS_s2_api_contract_2026-11-11T12-19-24Z.md دون تعديل",
+          "المهام الحرجة 👤 (base-T14, entry-T1, entry-T2, calc-T1, migr-T1) معلّمة في JSON والـ CSV والـ Playbook معاً ووسم human-review على صفوفها",
+          "قرار الاعتماد للإنسان وحده — لا يُفتح آلياً أبداً"
+        ],
+        "gateStatus": "pending"
+      },
+      "position": { "x": 460, "y": 2100 },
+      "width": 360,
+      "height": 260,
+      "parentId": "group-s3-20261111-POS",
+      "extent": "parent"
+    }
+  ],
+  "edges": [
+    { "id": "e1", "source": "s3-stage-1", "target": "s3-slice-base", "type": "custom" },
+    { "id": "e2", "source": "s3-stage-1", "target": "s3-slice-entry", "type": "custom" },
+    { "id": "e3", "source": "s3-stage-1", "target": "s3-slice-calc", "type": "custom" },
+    { "id": "e4", "source": "s3-stage-1", "target": "s3-slice-views", "type": "custom" },
+    { "id": "e5", "source": "s3-stage-1", "target": "s3-slice-migr", "type": "custom" },
+    { "id": "e6", "source": "s3-slice-base", "target": "s3-contract-base", "type": "custom" },
+    { "id": "e7", "source": "s3-slice-base", "target": "s3-data-base", "type": "custom" },
+    { "id": "e8", "source": "s3-slice-base", "target": "s3-tasks-base", "type": "custom" },
+    { "id": "e9", "source": "s3-slice-entry", "target": "s3-contract-entry", "type": "custom" },
+    { "id": "e10", "source": "s3-slice-entry", "target": "s3-data-entry", "type": "custom" },
+    { "id": "e11", "source": "s3-slice-entry", "target": "s3-tasks-entry", "type": "custom" },
+    { "id": "e12", "source": "s3-slice-calc", "target": "s3-contract-calc", "type": "custom" },
+    { "id": "e13", "source": "s3-slice-calc", "target": "s3-data-calc", "type": "custom" },
+    { "id": "e14", "source": "s3-slice-calc", "target": "s3-tasks-calc", "type": "custom" },
+    { "id": "e15", "source": "s3-slice-views", "target": "s3-contract-views", "type": "custom" },
+    { "id": "e16", "source": "s3-slice-views", "target": "s3-data-views", "type": "custom" },
+    { "id": "e17", "source": "s3-slice-views", "target": "s3-tasks-views", "type": "custom" },
+    { "id": "e18", "source": "s3-slice-migr", "target": "s3-contract-migr", "type": "custom" },
+    { "id": "e19", "source": "s3-slice-migr", "target": "s3-data-migr", "type": "custom" },
+    { "id": "e20", "source": "s3-slice-migr", "target": "s3-tasks-migr", "type": "custom" },
+    { "id": "e21", "source": "s3-slice-base", "target": "s3-slice-entry", "type": "custom" },
+    { "id": "e22", "source": "s3-slice-base", "target": "s3-slice-calc", "type": "custom" },
+    { "id": "e23", "source": "s3-slice-base", "target": "s3-slice-views", "type": "custom" },
+    { "id": "e24", "source": "s3-slice-base", "target": "s3-slice-migr", "type": "custom" },
+    { "id": "e25", "source": "s3-slice-entry", "target": "s3-slice-views", "type": "custom" },
+    { "id": "e26", "source": "s3-slice-entry", "target": "s3-slice-migr", "type": "custom" },
+    { "id": "e27", "source": "s3-tasks-base", "target": "s3-gate-7", "type": "custom" },
+    { "id": "e28", "source": "s3-tasks-entry", "target": "s3-gate-7", "type": "custom" },
+    { "id": "e29", "source": "s3-tasks-calc", "target": "s3-gate-7", "type": "custom" },
+    { "id": "e30", "source": "s3-tasks-views", "target": "s3-gate-7", "type": "custom" },
+    { "id": "e31", "source": "s3-tasks-migr", "target": "s3-gate-7", "type": "custom" }
+  ]
+}
