@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>لوحة التحكم - تطبيق الفاتورة</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Cairo', sans-serif;
+            background: #f5f7fa;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .dashboard-container {
+            max-width: 500px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            border-radius: 16px;
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        .welcome-message {
+            font-size: 20px;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+
+        .logout-button {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.4);
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            margin-top: 15px;
+            transition: all 0.3s ease;
+        }
+
+        .logout-button:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        .content {
+            background: white;
+            padding: 30px;
+            border-radius: 16px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .status-message {
+            background: #f0f4ff;
+            padding: 16px;
+            border-radius: 8px;
+            color: #667eea;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .quick-links {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+
+        .quick-link {
+            padding: 20px;
+            background: #f9fafb;
+            border: 1px solid #e5e7eb;
+            border-radius: 12px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .quick-link:hover {
+            background: #f3f4f6;
+            border-color: #667eea;
+        }
+
+        .quick-link-icon {
+            font-size: 28px;
+            margin-bottom: 8px;
+        }
+
+        .quick-link-text {
+            font-size: 14px;
+            color: #333;
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard-container">
+        <div class="header">
+            <div class="welcome-message" id="welcomeMessage">
+                أهلاً بعودتك!
+            </div>
+            <button class="logout-button" onclick="logout()">تسجيل الخروج</button>
+        </div>
+
+        <div class="content">
+            <div class="status-message">
+                تم تسجيل الدخول بنجاح - يمكنك البدء في استخدام التطبيق
+            </div>
+
+            <div class="quick-links">
+                <div class="quick-link">
+                    <div class="quick-link-icon">📝</div>
+                    <div class="quick-link-text">إضافة ديون</div>
+                </div>
+                <div class="quick-link">
+                    <div class="quick-link-icon">💰</div>
+                    <div class="quick-link-text">تسجيل المدفوعات</div>
+                </div>
+                <div class="quick-link">
+                    <div class="quick-link-icon">📊</div>
+                    <div class="quick-link-text">التقارير</div>
+                </div>
+                <div class="quick-link">
+                    <div class="quick-link-icon">⚙️</div>
+                    <div class="quick-link-text">الإعدادات</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const user = JSON.parse(localStorage.getItem('pos_user') || '{}');
+            if (!user.email) {
+                window.location.href = './login.html';
+            } else {
+                document.getElementById('welcomeMessage').textContent = 
+                    `أهلاً ${user.email.split('@')[0]}!`;
+            }
+        });
+
+        function logout() {
+            localStorage.removeItem('pos_user');
+            window.location.href = './login.html';
+        }
+    </script>
+</body>
+</html>
