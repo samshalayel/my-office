@@ -209,40 +209,51 @@ export class LedgerStore {
         }
       }
 
-      return entries
-        .filter((e) => !e.linkedTo) // Exclude corrected entries
-        .map((entry) => {
-          let label = this.getEntryTypeLabel(entry.type);
-          if (entry.accountId) {
-            const account = accountMap.get(entry.accountId);
-            if (account) {
-              label += ` — ${account.name}`;
-            }
+      return entries.map((entry) => {
+        let label = this.getEntryTypeLabel(entry.type);
+        if (entry.accountId) {
+          const account = accountMap.get(entry.accountId);
+          if (account) {
+            label += ` — ${account.name}`;
           }
+        }
 
-          return {
-            entryId: entry.id,
-            ts: entry.ts,
-            type: entry.type,
-            label,
-            amount: entry.amount,
-            accountId: entry.accountId,
-          };
-        });
+        // Mark correction entries
+        if (entry.linkedTo) {
+          label += ' (مُصحّح)';
+        }
+
+        return {
+          entryId: entry.id,
+          ts: entry.ts,
+          type: entry.type,
+          label,
+          amount: entry.amount,
+          accountId: entry.accountId,
+        };
+      });
     } catch (error) {
       console.error(`Failed to get day log: ${error}`);
       return [];
     }
   }
 
-  // Helper: Calculate balance from entries
+  // Helper: Calculate balance from entries (skips entries that have been corrected)
   private calculateBalance(entries: Entry[], side: Side): DerivedBalance {
+    // First, build a set of corrected entry IDs (entries that have a correction pointing to them)
+    const correctedEntryIds = new Set<string>();
+    for (const entry of entries) {
+      if (entry.linkedTo) {
+        correctedEntryIds.add(entry.linkedTo);
+      }
+    }
+
     let totalDebt = 0;
     let totalPaid = 0;
 
     for (const entry of entries) {
-      // Skip corrected entries (those with linkedTo reference newer entries)
-      if (entry.linkedTo) {
+      // Skip entries that have been corrected
+      if (correctedEntryIds.has(entry.id)) {
         continue;
       }
 
