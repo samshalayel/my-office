@@ -10,6 +10,10 @@ import {
   DerivedBalance,
   EntryType,
   Side,
+  SortField,
+  SortOrder,
+  SortOptions,
+  AccountsListResult,
 } from './types';
 import { LocalDatabase } from './local-database';
 
@@ -109,8 +113,12 @@ export class LedgerStore {
     }
   }
 
-  // C-4: listAccountSummaries
-  async listAccountSummaries(side: Side, query?: string): Promise<AccountRow[]> {
+  // C-4: listAccountSummaries with sorting support [base-T4]
+  async listAccountSummaries(
+    side: Side,
+    query?: string,
+    sortOptions?: SortOptions
+  ): Promise<AccountRow[]> {
     try {
       const accounts = await this.db.findAccounts(side, query);
       const rows: AccountRow[] = [];
@@ -129,11 +137,26 @@ export class LedgerStore {
         });
       }
 
-      return rows;
+      return this.sortAccounts(rows, sortOptions);
     } catch (error) {
       console.error(`Failed to list account summaries: ${error}`);
       return [];
     }
+  }
+
+  // [base-T4] getAccountsList: unified interface for search, filter, sort
+  async getAccountsList(
+    side: Side,
+    query?: string,
+    sortOptions?: SortOptions
+  ): Promise<AccountsListResult> {
+    const accounts = await this.listAccountSummaries(side, query, sortOptions);
+    return {
+      accounts,
+      totalCount: accounts.length,
+      query,
+      side,
+    };
   }
 
   // C-5: correctEntry
@@ -153,7 +176,6 @@ export class LedgerStore {
     }
 
     try {
-      // Verify original entry exists
       const allEntries = await this.db.getAllEntries();
       const original = allEntries.find((e) => e.id === originalId);
       if (!original) {
@@ -210,7 +232,7 @@ export class LedgerStore {
       }
 
       return entries
-        .filter((e) => !e.linkedTo) // Exclude corrected entries
+        .filter((e) => !e.linkedTo)
         .map((entry) => {
           let label = this.getEntryTypeLabel(entry.type);
           if (entry.accountId) {
@@ -235,13 +257,40 @@ export class LedgerStore {
     }
   }
 
+  // Helper: Sort accounts by field and order [base-T4]
+  private sortAccounts(rows: AccountRow[], sortOptions?: SortOptions): AccountRow[] {
+    const field = sortOptions?.field || 'name';
+    const order = sortOptions?.order || 'asc';
+
+    const sorted = [...rows].sort((a, b) => {
+      let compareValue = 0;
+
+      switch (field) {
+        case 'name':
+          compareValue = a.name.localeCompare(b.name, 'ar');
+          break;
+        case 'balance':
+          compareValue = a.balance - b.balance;
+          break;
+        case 'totalDebt':
+          compareValue = a.summary.totalDebt - b.summary.totalDebt;
+          break;
+        default:
+          compareValue = a.name.localeCompare(b.name, 'ar');
+      }
+
+      return order === 'asc' ? compareValue : -compareValue;
+    });
+
+    return sorted;
+  }
+
   // Helper: Calculate balance from entries
   private calculateBalance(entries: Entry[], side: Side): DerivedBalance {
     let totalDebt = 0;
     let totalPaid = 0;
 
     for (const entry of entries) {
-      // Skip corrected entries (those with linkedTo reference newer entries)
       if (entry.linkedTo) {
         continue;
       }
@@ -276,7 +325,6 @@ export class LedgerStore {
   private validateEntry(entry: NewEntry): string[] {
     const errors: string[] = [];
 
-    // Validate type
     const validTypes: EntryType[] = [
       'debt_client',
       'debt_supplier',
@@ -289,7 +337,6 @@ export class LedgerStore {
       errors.push('نوع القيد مطلوب');
     }
 
-    // Validate accountId requirement
     if (
       entry.type !== 'cash_sale' &&
       (!entry.accountId || entry.accountId.trim().length === 0)
@@ -297,7 +344,6 @@ export class LedgerStore {
       errors.push('حساب الطرف مطلوب');
     }
 
-    // Validate amount
     if (!entry.amount || entry.amount <= 0) {
       errors.push('المبلغ يجب أن يكون أكبر من صفر');
     }

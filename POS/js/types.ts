@@ -81,3 +81,19 @@ export interface MetaData {
   schemaVersion: number;
   lastInitialized?: string;
 }
+
+// [base-T4] Sorting support for accounts list
+export type SortField = 'name' | 'balance' | 'totalDebt';
+export type SortOrder = 'asc' | 'desc';
+
+export interface SortOptions {
+  field?: SortField;
+  order?: SortOrder;
+}
+
+export interface AccountsListResult {
+  accounts: AccountRow[];
+  totalCount: number;
+  query?: string;
+  side?: Side;
+}
