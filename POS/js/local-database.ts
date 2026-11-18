@@ -140,9 +140,12 @@ export class LocalDatabase {
       const index = store.index('ts');
 
       const dayStart = `${date}T00:00:00`;
-      const dayEnd = `${date}T23:59:59`;
+      const nextDate = new Date(date);
+      nextDate.setDate(nextDate.getDate() + 1);
+      const nextDateStr = nextDate.toISOString().split('T')[0];
+      const dayEnd = `${nextDateStr}T00:00:00`;
 
-      const range = IDBKeyRange.bound(dayStart, dayEnd, false, false);
+      const range = IDBKeyRange.bound(dayStart, dayEnd, false, true);
       const request = index.getAll(range);
 
       request.onerror = () => {
@@ -150,7 +153,9 @@ export class LocalDatabase {
       };
 
       request.onsuccess = () => {
-        resolve(request.result || []);
+        const entries = request.result || [];
+        entries.sort((a, b) => new Date(a.ts).getTime() - new Date(b.ts).getTime());
+        resolve(entries);
       };
     });
   }
