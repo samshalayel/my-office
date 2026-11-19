@@ -54,27 +54,25 @@
           "NG-1: لا تشخيص ولا قرار طبي على الطفل — النظام للتحضير لا للرعاية (النطاق الخارجي في PD)",
           "NG-2: لا استخدام أي مصدر بيانات خارج المشفى في التوقع (K-5)",
           "NG-3: لا تغيير في عمل كشك الولادة ولا في رعاية الأطفال داخل الحضانة (النطاق الخارجي في PD)",
-          "NG-4: لا تنفيذ أي فعل لا رجعة فيه (نقل/تجهيز/إبلاغ) بناءً على التوقع دون موافقة بشرية (أسئلة التفويض في PD + K-2)",
-          "DEC-1 (النمط): بانتظار قرار الإنسان — التوصية: ج) وكيل واحد بأدوات — التفاصيل في AGENTE_decisions.md"
+          "NG-4: لا تنفيذ أي فعل لا رجعة فيه (نقل/تجهيز/إبلاغ) بناءً على التوقع دون موافقة بشرية (K-2)",
+          "DEC-1 (النمط): مقرَّر — ج) وكيل واحد بأدوات (single agent + tools) — قرار الإنسان 2026-11-19 — راجع AGENTE_decisions.md"
         ]
       }
     },
     {
       "id": "s0-gate-5",
       "type": "s0-gate-node",
-      "position": { "x": 400, "y": 560 },
+      "position": { "x": 400, "y": 1120 },
       "data": {
         "label": "بوابة S0",
-        "description": "بوابة Human Only — لا تُفتح آلياً.",
-        "points": [],
         "gateStatus": "pending"
       }
     }
   ],
   "edges": [
-    { "id": "s0-e1", "source": "s0-stage-1", "target": "s0-insight-2" },
-    { "id": "s0-e2", "source": "s0-insight-2", "target": "s0-outcome-3" },
-    { "id": "s0-e3", "source": "s0-outcome-3", "target": "s0-direction-4" },
-    { "id": "s0-e4", "source": "s0-direction-4", "target": "s0-gate-5" }
+    { "id": "s0-edge-1", "source": "s0-stage-1", "target": "s0-insight-2", "type": "smoothstep" },
+    { "id": "s0-edge-2", "source": "s0-insight-2", "target": "s0-outcome-3", "type": "smoothstep" },
+    { "id": "s0-edge-3", "source": "s0-outcome-3", "target": "s0-direction-4", "type": "smoothstep" },
+    { "id": "s0-edge-4", "source": "s0-direction-4", "target": "s0-gate-5", "type": "smoothstep" }
   ]
 }
