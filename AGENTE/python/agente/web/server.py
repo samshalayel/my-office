@@ -202,7 +202,8 @@ class WebApp:
         dec = decision_for(self.db, "HITL-1", ref)
 
         def indicators(c: dict[str, Any]) -> str:
-            return "<br>".join(f"{esc(k)}: {'<span class=\"flag\">ناقص</span>' if v is None else esc(v)}" for k, v in c["indicators"].items())
+            missing_flag = '<span class="flag">ناقص</span>'
+            return "<br>".join(f"{esc(k)}: {missing_flag if v is None else esc(v)}" for k, v in c["indicators"].items())
 
         case_rows = [[
             esc(x["case"]["case_ref"]), esc(x["case"]["gestation_week"]), esc(x["expected_infants"]), indicators(x["case"]),
@@ -232,8 +233,8 @@ class WebApp:
         else:
             who = f' — {esc(dec["decided_by"])} {fmt_date(dec["decided_at"])} — السبب: {esc(dec["reason"])}' if dec else ""
             form = f'<div class="card"><strong>القرار:</strong> {status_ar(p["status"])}{who}</div>'
-        missing = (f'<div class="card">{" ".join(f"<span class=\"badge none\">{esc(f)}</span>" for f in c5["missing_fields"])}</div>'
-                   if c5["missing_fields"] else '<p class="muted">لا نواقص.</p>')
+        badges = " ".join('<span class="badge none">' + esc(f) + "</span>" for f in c5["missing_fields"])
+        missing = f'<div class="card">{badges}</div>' if c5["missing_fields"] else '<p class="muted">لا نواقص.</p>'
         return f"""
 <div class="card"><div class="grid">
   <div><div class="muted">الحالة</div><strong>{status_ar(p["status"])}</strong></div>

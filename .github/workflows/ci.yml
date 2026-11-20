@@ -73,7 +73,7 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           # نسخ Python من المشاريع (AGENTE/python — DEV-16)
-          python-version: "3.12"
+          python-version: "3.11"   # أدنى نسخة مدعومة
 
       - name: Python tests (each folder with python/requirements.txt)
         run: |

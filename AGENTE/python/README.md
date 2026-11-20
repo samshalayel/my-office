@@ -4,13 +4,13 @@
 > وحالات التقييم (`evals/cases` و `redteam/cases`) تُقرأ من مجلد `AGENTE/` الأب — مصدر حقيقة واحد للنسختين.
 
 ## التشغيل
-المتطلب: Python 3.12 أو أحدث. قاعدة البيانات `sqlite3` والخادم `http.server` من المكتبة القياسية؛
+المتطلب: Python 3.11 أو أحدث. قاعدة البيانات `sqlite3` والخادم `http.server` من المكتبة القياسية؛
 المكتبات الخارجية حصراً: `langgraph` و `langchain-core` و `langchain-openai` (بنسخ مثبتة في `requirements.txt`).
 
 ```bash
 cd AGENTE/python
 python -m venv .venv
-.venv/bin/pip install -r requirements.txt            # على Windows: .venv\Scripts\pip install -r requirements.txt
+.venv/bin/pip install --timeout 120 --retries 10 -r requirements.txt   # على Windows: .venv\Scripts\pip ...
 .venv/bin/python -m agente set-password owner        # كلمة السر من AGENTE_NEW_PASSWORD أو من إدخال مخفي
 ```
 على Windows استبدل `.venv/bin/python` بـ `.venv\Scripts\python`.
