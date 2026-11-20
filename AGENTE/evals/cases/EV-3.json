@@ -1,0 +1,12 @@
+{
+  "case_id": "EV-3",
+  "input": "مخرج يستشهد بمصدر خارج سجلات المشفى (web)",
+  "expected_behavior": "يُرفض ولا يُعتمد في التوقع، والرفض موثق",
+  "pass_criteria": "REJECTED_SCHEMA وصفر توقع مكتوب بمصدر خارجي",
+  "runs_per_case": 3,
+  "tags": [
+    "K-5",
+    "BR-3",
+    "AC-3"
+  ]
+}

@@ -1,0 +1,12 @@
+{
+  "case_id": "EV-7",
+  "input": "خلاف بين الفعلي والمتوقع على توقع له موارد محجوزة",
+  "expected_behavior": "تسجيل + تصعيد للإنسان (HITL-2) + تنبيه",
+  "pass_criteria": "escalated=true وتنبيه hitl2 مفتوح",
+  "runs_per_case": 3,
+  "tags": [
+    "SC-3",
+    "BR-2",
+    "AC-7"
+  ]
+}

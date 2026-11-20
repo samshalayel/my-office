@@ -19,7 +19,8 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          # 22.18+: تشغيل TypeScript مباشرة + node:sqlite المدمج (مشروع AGENTE)
+          node-version: 22
 
       - name: Install dependencies (if the project has package.json)
         run: |
@@ -37,6 +38,16 @@ jobs:
             echo "no build script — skipping"
           fi
 
+      - name: Project dependencies (folders with their own package.json)
+        run: |
+          # مشروع بملف package.json خاص به يُثبَّت ويُفحص بأدواته هو (نسخة TypeScript ومكتباته)
+          for pj in $(git ls-files '*/package.json' | grep -v node_modules); do
+            d=$(dirname "$pj")
+            echo "::group::npm ci: $d"
+            if [ -f "$d/package-lock.json" ]; then npm ci --prefix "$d" --no-audit --no-fund; else npm install --prefix "$d" --no-audit --no-fund; fi
+            echo "::endgroup::"
+          done
+
       - name: TypeScript type check (each project folder on its own)
         run: |
           # مجلد لكل مشروع: يُفحص كل مشروع وحده، فخطأ في مشروع يظهر باسمه ولا يختلط بغيره
@@ -46,7 +57,9 @@ jobs:
           for d in $DIRS; do
             if [ -f "$d" ]; then FILES="$d"; else FILES=$(git ls-files "$d/*.ts" "$d/*.tsx" | grep -v '\.d\.ts$'); fi
             echo "::group::type check: $d"
-            if [ -f "$d/tsconfig.json" ]; then
+            if [ -f "$d/package.json" ] && node -e "process.exit(require('./$d/package.json').scripts?.typecheck ? 0 : 1)"; then
+              npm run typecheck --prefix "$d" || FAILED="$FAILED $d"
+            elif [ -f "$d/tsconfig.json" ]; then
               npx -y -p typescript@5.6.3 tsc --noEmit -p "$d" || FAILED="$FAILED $d"
             else
               npx -y -p typescript@5.6.3 tsc --noEmit --strict --skipLibCheck \
@@ -59,10 +72,20 @@ jobs:
 
       - name: Tests (npm test, or *.test.ts / *.spec.ts with node --test)
         run: |
+          # مشاريع لها سكربت test خاص بها تُشغَّل كلٌّ في مجلدها، وتُستثنى من التشغيل العام
+          OWN=""
+          for pj in $(git ls-files '*/package.json' | grep -v node_modules); do
+            d=$(dirname "$pj")
+            if node -e "process.exit(require('./$d/package.json').scripts?.test ? 0 : 1)"; then
+              echo "::group::npm test: $d"; npm test --prefix "$d"; echo "::endgroup::"
+              OWN="$OWN $d"
+            fi
+          done
           if [ -f package.json ] && node -e "process.exit(require('./package.json').scripts?.test ? 0 : 1)"; then
             npm test
           else
             TESTS=$(git ls-files '*.test.ts' '*.spec.ts' '*.test.js' '*.spec.js' || true)
+            for d in $OWN; do TESTS=$(echo "$TESTS" | grep -v "^$d/" || true); done
             if [ -n "$TESTS" ]; then
               npx -y tsx@4.19.2 --test $TESTS
             else

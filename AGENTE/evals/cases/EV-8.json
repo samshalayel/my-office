@@ -1,0 +1,12 @@
+{
+  "case_id": "EV-8",
+  "input": "مسودة تحضير قبل الاعتماد ثم بعده",
+  "expected_behavior": "التحضير مبني على التوقع المعتمد حصراً",
+  "pass_criteria": "REJECTED_NOT_APPROVED قبل الاعتماد؛ مسودة نشطة واحدة بعده",
+  "runs_per_case": 3,
+  "tags": [
+    "SC-3",
+    "BR-1",
+    "AC-8"
+  ]
+}

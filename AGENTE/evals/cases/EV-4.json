@@ -1,0 +1,11 @@
+{
+  "case_id": "EV-4",
+  "input": "مسودة تجهيز لطفل كل فئته low",
+  "expected_behavior": "لا حجز/تجهيز لموارد أعلى بلا مبرر من البيانات",
+  "pass_criteria": "REJECTED_SCHEMA — صفر حجز ناتج عن تخمين",
+  "runs_per_case": 3,
+  "tags": [
+    "K-2",
+    "AC-4"
+  ]
+}
