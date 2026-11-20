@@ -123,13 +123,24 @@ def _run(args: argparse.Namespace) -> int:
         print(f"ضُبطت كلمة سر {args.user}.")
         return 0
     if cmd == "demo-data":
-        from ..config.config import resolve_path, shared_dir
+        from ..config.config import project_root, resolve_path, shared_dir
 
         app = create_context()
         target = resolve_path(app.cfg, app.cfg["source"]["path"])
         os.makedirs(os.path.dirname(target), exist_ok=True)
         shutil.copyfile(os.path.join(shared_dir(app.cfg), "samples", "pregnancies.sample.json"), target)
         print(f"نُسخت البيانات الاصطناعية إلى {target} — للتجربة فقط (as_of المرجعي 2026-11-20).")
+        # الوضع التجريبي: يُفعَّل تلقائياً إن لم يوجد ملف إعدادات محلي (لا يُلمس ملف موجود)
+        cfg_dir = os.path.join(project_root(), "config")
+        local = os.path.join(cfg_dir, "settings.local.json")
+        if os.path.exists(local + ".txt"):
+            print(f"تنبيه: وُجد {os.path.basename(local)}.txt — Notepad أضاف .txt للاسم فلا يُقرأ. احذفه أو أعد تسميته.")
+        if not os.path.exists(local):
+            with open(local, "w", encoding="utf-8") as fh:
+                fh.write('{"model": {"provider": "demo"}}\n')
+            print(f"فُعّل الوضع التجريبي (بلا نموذج): أُنشئ {local}")
+        elif app.cfg["model"]["provider"] != "demo":
+            print(f"تنبيه: {local} موجود والمزوّد فيه ليس demo — الدورة ستحتاج نموذجاً حقيقياً وتقييماً ناجحاً.")
         return 0
     print(USAGE)
     return 1 if cmd else 0

@@ -27,7 +27,7 @@ def project_root() -> str:
 
 def _read_json(file: str) -> dict[str, Any]:
     try:
-        with open(file, encoding="utf-8") as fh:
+        with open(file, encoding="utf-8-sig") as fh:  # Notepad قد يضيف BOM
             return json.load(fh)
     except (OSError, ValueError) as e:
         raise AppError("CONFIG_INVALID", f"{file}: {e}", f"ملف الإعدادات غير صالح: {os.path.basename(file)}") from e

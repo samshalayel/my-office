@@ -17,8 +17,7 @@ python -m venv .venv
 
 **تجربة الواجهة بلا نموذج (بيانات اصطناعية):**
 ```bash
-echo '{"model":{"provider":"demo"}}' > config/settings.local.json
-python -m agente demo-data                 # بيانات اصطناعية إلى data/inbox (as_of المرجعي 2026-11-20)
+python -m agente demo-data                 # بيانات اصطناعية إلى data/inbox + يفعّل الوضع التجريبي (ينشئ config/settings.local.json إن لم يوجد)
 python -m agente cycle --as-of=2026-11-20
 python -m agente serve                     # http://127.0.0.1:8481
 ```

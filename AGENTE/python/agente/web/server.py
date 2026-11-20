@@ -347,6 +347,7 @@ class WebApp:
         return f"""
 <form method="post" action="/outcomes" class="card">{csrf_field(s.csrf)}
 <p class="muted">نقطة الإدخال الوحيدة للمقياس الفعلي (TB-2). القيمة خارج 0..10 تُرفض ولا تُصحَّح. الملاحظة نص فقط.</p>
+{'' if refs else '<p class="flag">لا حالات بعد — شغّل دورة توقع أولاً (من الرئيسية أو: python -m agente cycle).</p>'}
 <label for="case_ref">الحالة</label><select id="case_ref" name="case_ref" required>{"".join(f"<option>{esc(r['case_ref'])}</option>" for r in refs)}</select>
 <label for="birth_datetime">وقت الولادة</label><input id="birth_datetime" name="birth_datetime" type="datetime-local" required>
 <label for="apgar_value">مقياس Apgar (0–10)</label><input id="apgar_value" name="apgar_value" inputmode="numeric" pattern="\\d{{1,2}}" required>
