@@ -13,6 +13,7 @@
     "backup": "node --no-warnings=ExperimentalWarning scripts/cli.ts backup",
     "restore": "node --no-warnings=ExperimentalWarning scripts/cli.ts restore",
     "set-password": "node --no-warnings=ExperimentalWarning scripts/cli.ts set-password",
+    "demo-data": "node --no-warnings=ExperimentalWarning scripts/cli.ts demo-data",
     "typecheck": "tsc --noEmit -p .",
     "test": "node --no-warnings=ExperimentalWarning --test --test-concurrency=1 tests/*.test.ts"
   },
