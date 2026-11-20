@@ -1,0 +1,8 @@
+node_modules/
+# بيانات المشفى والتشغيل — لا تدخل الريبو أبداً (DEC-14 / HR-5)
+data/
+backups/
+evals/reports/*
+!evals/reports/.gitkeep
+# إعدادات الخادم المحلية (قيم خاصة بالمشفى) — الأسرار أصلاً في متغيرات البيئة لا في الملفات
+config/settings.local.json

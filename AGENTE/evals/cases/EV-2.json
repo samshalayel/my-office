@@ -1,0 +1,12 @@
+{
+  "case_id": "EV-2",
+  "input": "بيانات ناقصة لحامل (H-0003: وزن الجنين وزيادة الوزن)",
+  "expected_behavior": "يعلن النقص ولا يملؤه، والثقة low",
+  "pass_criteria": "الحقول الناقصة معلّمة في التوقع وفي C-5، و confidence_flag=low",
+  "runs_per_case": 3,
+  "tags": [
+    "K-1",
+    "AC-9",
+    "HR-3"
+  ]
+}
