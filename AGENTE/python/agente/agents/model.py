@@ -96,7 +96,7 @@ class OpenAICompatibleModel:
             return ChatOpenAI(
                 model=model, api_key=key, base_url=re.sub(r"/+$", "", cfg["model"]["base_url"]) or None,
                 temperature=cfg["model"]["temperature"], max_completion_tokens=cfg["model"]["max_output_tokens"],
-                max_retries=1, timeout=cfg["caps"]["model_timeout_s"], use_responses_api=False,
+                max_retries=1, timeout=cfg["caps"]["model_timeout_s"] + 5, use_responses_api=False,  # المهلة الملزمة: with_timeout في عقدة agent
             ).bind_tools([{"type": "function", "function": t} for t in tools])
 
         primary = make(self.model_id)

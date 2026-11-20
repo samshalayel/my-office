@@ -1,0 +1,93 @@
+{
+  "_comment": "C-11 ConfigSpec — القيم الافتراضية (نسخة Python). خادم المشفى يغيّر ما يلزم في config/settings.local.json (خارج الريبو). الأسرار في متغيرات البيئة فقط (BASE-A7). paths.shared_dir = مجلد AGENTE/ المشترك (prompts و samples وحالات التقييم).",
+  "model": {
+    "provider": "openai_compatible",
+    "base_url": "https://openrouter.ai/api/v1",
+    "model": "",
+    "fallback_model": "",
+    "api_key_env": "AGENTE_MODEL_API_KEY",
+    "temperature": 0,
+    "max_output_tokens": 2500
+  },
+  "caps": {
+    "max_model_calls_per_cycle": 8,
+    "max_tool_steps": 12,
+    "model_timeout_s": 90,
+    "tool_timeout_s": 30,
+    "cycle_timeout_s": 600,
+    "max_cases_per_cycle": 60,
+    "max_infants_per_case": 6
+  },
+  "window_days": 7,
+  "thresholds": {
+    "count_match_pct": 80,
+    "class_match_pct": 85
+  },
+  "apgar_bands": {
+    "high_risk_max": 3,
+    "medium_risk_max": 6
+  },
+  "kill_switch": {
+    "enabled": false,
+    "disabled_tools": []
+  },
+  "schedule": {
+    "enabled": true,
+    "daily_cycle_time": "06:00",
+    "batch_deadline_time": "09:00",
+    "reminder_every_minutes": 60,
+    "backup_time": "02:30",
+    "backups_keep": 14
+  },
+  "source": {
+    "type": "json_file",
+    "path": "data/inbox/pregnancies.json",
+    "system_name": "hospital-records",
+    "fields": {
+      "source_key": "mrn",
+      "gestation_week": "gestation_week",
+      "expected_delivery_date": "expected_delivery_date",
+      "expected_infants": "expected_infants",
+      "notes": "doctor_notes",
+      "indicators": [
+        "bp_systolic",
+        "weight_gain_kg",
+        "previous_preterm",
+        "preeclampsia",
+        "fetal_weight_g",
+        "steroids_given"
+      ],
+      "identity": [
+        "name",
+        "national_id",
+        "phone",
+        "mrn",
+        "address"
+      ]
+    }
+  },
+  "privacy": {
+    "send_notes_to_model": false
+  },
+  "alerts": {
+    "webhook_url": ""
+  },
+  "server": {
+    "host": "127.0.0.1",
+    "port": 8481,
+    "tls_cert": "",
+    "tls_key": "",
+    "session_hours": 12,
+    "max_login_attempts": 5,
+    "lockout_minutes": 15
+  },
+  "paths": {
+    "db": "data/office.sqlite",
+    "trace_dir": "data/trace",
+    "controls": "data/controls.json",
+    "eval_baseline": "data/eval_baseline.json",
+    "backups_dir": "backups",
+    "reports_dir": "evals/reports",
+    "shared_dir": ".."
+  }
+}

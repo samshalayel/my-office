@@ -139,3 +139,12 @@ CI الريبو (`.github/workflows/ci.yml`) صار يشغّل `typecheck` و `n
 3. **K-2** ما زال [افتراض]، وسياسة الاحتفاظ بالبيانات غير محددة.
 4. **المنطقة الزمنية:** الدورة والمواعيد بتوقيت الخادم. هل خادم المشفى على توقيت فلسطين؟
 5. **الحسابات:** مستخدم واحد (صاحب الحضانة) حسب BASE-2/BASE-3. هل يحتاج أحد غيره حساباً؟
+
+## نسخة Python (DEV-16)
+| DEV | ما في S2/S3 | ما بُني | لماذا |
+|---|---|---|---|
+| DEV-16 | نسخة واحدة TypeScript | **نسخة Python منفصلة كاملة** في `AGENTE/python/` (حزمة `agente`) بطلب صاحب المشروع 2026-11-20: نفس العقود والحمايات والمخطط والـ triggers والرسائل العربية، والوكيل جراف **LangGraph** (`StateGraph` بعقدتين agent ⇄ tools، عقدة tools مكتوبة يدوياً، بلا checkpointer ولا interrupt، تتبّع LangSmith مقفل قسراً) كتصميم فرع `agente/langgraph`. المكتبة القياسية لكل شيء (`sqlite3`، `http.server`، `hashlib.scrypt`، `getpass`) عدا `langgraph` 1.2.20 و `langchain-core` 1.7.6 و `langchain-openai` 1.7.4 (كل التبعيات مثبتة في `requirements.txt`). | **يحتاج قرارك:** أي النسختين تُعتمد للتشغيل. النسختان تقرآن `prompts/` و `samples/` وحالات التقييم من هذا المجلد (مصدر واحد)، ولكل منهما `data/` خاص، ومنفذ Python 8481. |
+
+- التشغيل والأوامر: `AGENTE/python/README.md` (`python -m agente serve|cycle|eval|backup|restore|set-password|demo-data`).
+- الفحوص: `python -m pytest` (الاختبارات الـ 15 المنقولة + 3 للمسار الحي أمام خادم OpenAI مُحاكى: إعادة بعد 500، أدوات، مهلة تقطع الطلب فعلاً) و `python -m agente eval` (14 حالة EV/RT — نفس الأدلة حرفياً كنسخة TypeScript). CI يشغّل pytest على Python 3.12.
+- فروق صغيرة معروفة: أوامر التشغيل في الرسائل (`npm run …` ← `python -m agente …`)؛ التواريخ في الإدخال بصيغة ISO 8601 فقط (JavaScript يقبل صيغاً أخرى)؛ أطوال النصوص تُعدّ بالمحارف لا بوحدات UTF-16 (لا فرق للعربية).

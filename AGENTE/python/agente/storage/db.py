@@ -10,15 +10,18 @@ import os
 import re
 import secrets
 import sqlite3
-import weakref
 from datetime import datetime, timezone
 from typing import Any, Callable, TypeVar
 
 from ..jsutil import iso, jdump
 from ..observability.errors import AppError
 
-Db = sqlite3.Connection
 T = TypeVar("T")
+
+
+class Db(sqlite3.Connection):
+    """اتصال SQLite يحمل عمق المعاملات المتداخلة (SAVEPOINT)"""
+    tx_depth: int = 0
 
 SCHEMA = """
 CREATE TABLE IF NOT EXISTS meta (key TEXT PRIMARY KEY, value TEXT NOT NULL);
@@ -206,7 +209,7 @@ def open_db(file: str) -> Db:
         os.makedirs(os.path.dirname(file) or ".", exist_ok=True)
     # isolation_level=None: لا معاملات ضمنية — المعاملات صريحة عبر tx() كما في node:sqlite.
     # check_same_thread=False: كل الوصول متسلسل على حلقة asyncio واحدة (web/server.py) أو على خيط الأوامر.
-    db = sqlite3.connect(file, isolation_level=None, check_same_thread=False)
+    db = sqlite3.connect(file, isolation_level=None, check_same_thread=False, factory=Db)
     db.row_factory = _dict_row
     db.executescript("PRAGMA journal_mode = WAL; PRAGMA foreign_keys = ON; PRAGMA busy_timeout = 5000;")
     db.executescript(SCHEMA)
@@ -248,15 +251,12 @@ def map_sql_error(e: BaseException) -> BaseException:
     return e
 
 
-_depth: "weakref.WeakKeyDictionary[Db, int]" = weakref.WeakKeyDictionary()
-
-
 def tx(db: Db, fn: Callable[[], T]) -> T:
     """معاملة ذرية (BEGIN IMMEDIATE = كاتب واحد)؛ المتداخلة تصير SAVEPOINT"""
-    d = _depth.get(db, 0)
+    d = getattr(db, "tx_depth", 0)
     sp = f"sp{d}"
     db.execute("BEGIN IMMEDIATE" if d == 0 else f"SAVEPOINT {sp}")
-    _depth[db] = d + 1
+    db.tx_depth = d + 1
     try:
         r = fn()
         db.execute("COMMIT" if d == 0 else f"RELEASE {sp}")
@@ -275,7 +275,7 @@ def tx(db: Db, fn: Callable[[], T]) -> T:
             raise
         raise mapped from e
     finally:
-        _depth[db] = d
+        db.tx_depth = d
 
 
 def now_iso() -> str:

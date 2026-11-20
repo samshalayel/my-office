@@ -70,6 +70,27 @@ jobs:
           done
           if [ -n "$FAILED" ]; then echo "::error::type errors in:$FAILED"; exit 1; fi
 
+      - uses: actions/setup-python@v5
+        with:
+          # نسخ Python من المشاريع (AGENTE/python — DEV-16)
+          python-version: "3.12"
+
+      - name: Python tests (each folder with python/requirements.txt)
+        run: |
+          FOUND=""
+          for req in $(git ls-files '*python/requirements.txt'); do
+            d=$(dirname "$req")
+            FOUND="$FOUND $d"
+            echo "::group::pytest: $d"
+            python -m venv "$d/.venv"
+            "$d/.venv/bin/pip" install --disable-pip-version-check -q -r "$d/requirements.txt"
+            if [ -f "$d/requirements-dev.txt" ]; then "$d/.venv/bin/pip" install --disable-pip-version-check -q -r "$d/requirements-dev.txt"; fi
+            (cd "$d" && .venv/bin/python -m pytest -q)
+            echo "::endgroup::"
+          done
+          [ -z "$FOUND" ] && echo "no Python projects"
+          true
+
       - name: Tests (npm test, or *.test.ts / *.spec.ts with node --test)
         run: |
           # مشاريع لها سكربت test خاص بها تُشغَّل كلٌّ في مجلدها، وتُستثنى من التشغيل العام
