@@ -1,15 +1,23 @@
 /**
- * عميل النموذج (DEC-12 أ: نموذج سحابي قوي واحد، من الإعدادات — BASE-A4؛ لا اسم نموذج في الكود).
- *  - openai_compatible: أي مزوّد بواجهة chat/completions (OpenRouter وغيره) عبر fetch — بلا SDK ولا إطار (DEC-11 أ).
- *  - scripted: ردود مكتوبة مسبقاً للاختبارات والتقييم الحتمي.
- *  - demo: قاعدة بسيطة معلنة لتجربة الواجهة بلا مفتاح — ليست توقعاً حقيقياً، والواجهة تعرض تحذيراً دائماً.
- * المفتاح من متغير البيئة فقط (BASE-A7). فشل أو مهلة → إعادة واحدة ثم النموذج الاحتياطي إن ضُبط.
+ * عميل النموذج على LangChain (DEV-15: LangGraph بدل «بلا إطار» — قرار صاحب المشروع 2026-11-20).
+ * نموذج واحد من الإعدادات (DEC-12 أ / BASE-A4؛ لا اسم نموذج في الكود)، وثلاثة أنواع بالواجهة نفسها (Runnable من LangChain):
+ *  - live: ChatOpenAI على أي مزوّد بواجهة chat/completions (OpenRouter وغيره) — إعادة واحدة ثم النموذج الاحتياطي (withFallbacks)
+ *  - scripted: BaseChatModel بردود مكتوبة مسبقاً للاختبارات والتقييم الحتمي
+ *  - demo: BaseChatModel بقاعدة معلنة لتجربة الواجهة بلا مفتاح — ليست توقعاً حقيقياً، والواجهة تعرض تحذيراً دائماً
+ * المفتاح من متغير البيئة فقط (BASE-A7). تتبّع LangSmith مقفل قسراً: لا شيء يخرج لخدمة خارجية غير مزوّد النموذج (HR-5).
  */
+import { BaseChatModel, type BaseChatModelCallOptions } from "@langchain/core/language_models/chat_models";
+import { AIMessage, type BaseMessage } from "@langchain/core/messages";
+import type { ChatResult } from "@langchain/core/outputs";
+import { ChatOpenAI } from "@langchain/openai";
 import { type Config, modelApiKey } from "../config/config.ts";
 import { AppError } from "../observability/errors.ts";
 
+for (const k of ["LANGSMITH_TRACING", "LANGCHAIN_TRACING_V2", "LANGCHAIN_TRACING"]) process.env[k] = "false";
+
 export interface ToolCall { id: string; name: string; arguments: string }
 
+/** شكل مبسّط للرسائل — للتتبّع وفحص المعرفات والنماذج المحلية */
 export type ChatMessage =
   | { role: "system" | "user"; content: string }
   | { role: "assistant"; content: string | null; tool_calls?: ToolCall[] }
@@ -19,24 +27,37 @@ export interface ToolSpec { name: string; description: string; parameters: Recor
 
 export interface ModelReply { content: string | null; tool_calls: ToolCall[]; tokens_in: number; tokens_out: number; model: string }
 
+/** نموذج مربوط بأدوات المرحلة — ما يستدعيه عقدة agent في الجراف */
+export interface BoundModel { invoke(messages: BaseMessage[], options: { signal: AbortSignal }): Promise<BaseMessage> }
+
 export interface ModelClient {
   kind: "live" | "scripted" | "demo";
   modelId: string;
-  call(messages: ChatMessage[], tools: ToolSpec[], signal: AbortSignal): Promise<ModelReply>;
+  withTools(tools: ToolSpec[]): BoundModel;
+}
+
+const text = (c: unknown): string => typeof c === "string" ? c : Array.isArray(c)
+  ? c.map((p: any) => (typeof p === "string" ? p : typeof p?.text === "string" ? p.text : "")).join("") : "";
+
+/** رسالة LangChain → الشكل المبسّط */
+export function toPlain(m: BaseMessage): ChatMessage {
+  const t = m.getType();
+  if (t === "system") return { role: "system", content: text(m.content) };
+  if (t === "human") return { role: "user", content: text(m.content) };
+  if (t === "tool") {
+    const tm = m as BaseMessage & { tool_call_id: string };
+    return { role: "tool", tool_call_id: tm.tool_call_id, name: String(m.name ?? ""), content: text(m.content) };
+  }
+  const ai = m as AIMessage;
+  const calls: ToolCall[] = [
+    ...(ai.tool_calls ?? []).map((c, i) => ({ id: String(c.id ?? `call_${i}`), name: c.name, arguments: JSON.stringify(c.args ?? {}) })),
+    ...(ai.invalid_tool_calls ?? []).map((c, i) => ({ id: String(c.id ?? `bad_${i}`), name: String(c.name ?? ""), arguments: String(c.args ?? "") })),
+  ];
+  const content = text(ai.content);
+  return { role: "assistant", content: content === "" && calls.length ? null : content, ...(calls.length ? { tool_calls: calls } : {}) };
 }
 
 // ── مزوّد حقيقي ─────────────────────────────────────────────────────────────
-function toWire(m: ChatMessage): Record<string, unknown> {
-  if (m.role === "assistant") {
-    return {
-      role: "assistant", content: m.content,
-      ...(m.tool_calls?.length ? { tool_calls: m.tool_calls.map((t) => ({ id: t.id, type: "function", function: { name: t.name, arguments: t.arguments } })) } : {}),
-    };
-  }
-  if (m.role === "tool") return { role: "tool", tool_call_id: m.tool_call_id, content: m.content };
-  return { role: m.role, content: m.content };
-}
-
 export class OpenAICompatibleModel implements ModelClient {
   readonly kind = "live" as const;
   readonly modelId: string;
@@ -46,62 +67,61 @@ export class OpenAICompatibleModel implements ModelClient {
     this.modelId = cfg.model.model;
   }
 
-  private async once(model: string, messages: ChatMessage[], tools: ToolSpec[], signal: AbortSignal): Promise<ModelReply> {
-    const key = modelApiKey(this.cfg);
-    if (!key) throw new AppError("MODEL_ERROR", `missing env ${this.cfg.model.api_key_env}`, `مفتاح النموذج غير مضبوط على الخادم (متغير البيئة ${this.cfg.model.api_key_env}).`);
-    const url = `${this.cfg.model.base_url.replace(/\/+$/, "")}/chat/completions`;
-    let res: Response;
-    try {
-      res = await fetch(url, {
-        method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${key}` },
-        body: JSON.stringify({
-          model,
-          messages: messages.map(toWire),
-          ...(tools.length ? { tools: tools.map((t) => ({ type: "function", function: t })), tool_choice: "auto" } : {}),
-          temperature: this.cfg.model.temperature,
-          max_tokens: this.cfg.model.max_output_tokens,
-        }),
-        signal,
-      });
-    } catch (e) {
-      throw new AppError("MODEL_ERROR", `network: ${(e as Error).name}`);
-    }
-    const body = await res.text();
-    if (!res.ok) throw new AppError("MODEL_ERROR", `HTTP ${res.status}: ${body.slice(0, 300)}`);
-    let j: any;
-    try { j = JSON.parse(body); } catch { throw new AppError("MODEL_ERROR", "non-JSON response"); }
-    const msg = j?.choices?.[0]?.message;
-    if (!msg) throw new AppError("MODEL_ERROR", `no message: ${String(j?.error?.message || "").slice(0, 200)}`);
-    const calls: ToolCall[] = Array.isArray(msg.tool_calls)
-      ? msg.tool_calls.filter((t: any) => t?.function?.name).map((t: any, i: number) => ({
-        id: String(t.id || `call_${i}`), name: String(t.function.name), arguments: typeof t.function.arguments === "string" ? t.function.arguments : JSON.stringify(t.function.arguments ?? {}),
-      }))
-      : [];
+  withTools(tools: ToolSpec[]): BoundModel {
+    const cfg = this.cfg;
+    if (!this.modelId) throw new AppError("CONFIG_INVALID", "model.model empty", "لم يُحدَّد النموذج في الإعدادات (model.model).");
+    const key = modelApiKey(cfg);
+    if (!key) throw new AppError("MODEL_ERROR", `missing env ${cfg.model.api_key_env}`, `مفتاح النموذج غير مضبوط على الخادم (متغير البيئة ${cfg.model.api_key_env}).`);
+    const make = (model: string) => new ChatOpenAI({
+      model, apiKey: key, configuration: { baseURL: cfg.model.base_url.replace(/\/+$/, "") },
+      temperature: cfg.model.temperature, maxTokens: cfg.model.max_output_tokens, maxRetries: 1,
+    }).bindTools(tools.map((t) => ({ type: "function" as const, function: t })));
+    const primary = make(this.modelId);
+    const runnable = cfg.model.fallback_model ? primary.withFallbacks([make(cfg.model.fallback_model)]) : primary;
     return {
-      content: typeof msg.content === "string" ? msg.content : null,
-      tool_calls: calls,
-      tokens_in: Number(j?.usage?.prompt_tokens) || 0,
-      tokens_out: Number(j?.usage?.completion_tokens) || 0,
-      model: String(j?.model || model),
+      async invoke(messages, options) {
+        try {
+          return await runnable.invoke(messages, options);
+        } catch (e) {
+          if (e instanceof AppError) throw e;
+          const err = e as { status?: number; name?: string; message?: string };
+          throw new AppError("MODEL_ERROR", `${err.status ? `HTTP ${err.status}` : err.name || "error"}: ${String(err.message || "").slice(0, 300)}`);
+        }
+      },
     };
   }
+}
 
-  async call(messages: ChatMessage[], tools: ToolSpec[], signal: AbortSignal): Promise<ModelReply> {
-    if (!this.modelId) throw new AppError("CONFIG_INVALID", "model.model empty", "لم يُحدَّد النموذج في الإعدادات (model.model).");
-    const retriable = (e: unknown) => e instanceof AppError && e.code === "MODEL_ERROR" && /network|HTTP (429|5\d\d)/.test(e.detail);
-    try {
-      return await this.once(this.modelId, messages, tools, signal);
-    } catch (e1) {
-      if (!retriable(e1) || signal.aborted) throw e1;
-      try {
-        return await this.once(this.modelId, messages, tools, signal);
-      } catch (e2) {
-        const fb = this.cfg.model.fallback_model;
-        if (!fb || !retriable(e2) || signal.aborted) throw e2;
-        return await this.once(fb, messages, tools, signal);
-      }
+// ── نماذج محلية (BaseChatModel من LangChain) ─────────────────────────────────
+type LocalOptions = BaseChatModelCallOptions & { agentTools?: ToolSpec[] };
+
+abstract class LocalChatModel extends BaseChatModel<LocalOptions> implements ModelClient {
+  abstract readonly kind: "scripted" | "demo";
+  abstract readonly modelId: string;
+  constructor() { super({}); }
+  _llmType(): string { return `agente-${this.kind}`; }
+  protected abstract respond(messages: ChatMessage[], tools: ToolSpec[]): ModelReply;
+
+  withTools(tools: ToolSpec[]): BoundModel {
+    return this.withConfig({ agentTools: tools } as Partial<LocalOptions>) as unknown as BoundModel;
+  }
+
+  async _generate(messages: BaseMessage[], options: this["ParsedCallOptions"]): Promise<ChatResult> {
+    const r = this.respond(messages.map(toPlain), options.agentTools ?? []);
+    const valid: { id: string; name: string; args: Record<string, unknown>; type: "tool_call" }[] = [];
+    const invalid: { id: string; name: string; args: string; error: string; type: "invalid_tool_call" }[] = [];
+    for (const c of r.tool_calls) {
+      let args: unknown;
+      try { args = JSON.parse(c.arguments || "{}"); } catch { args = undefined; }
+      if (args && typeof args === "object" && !Array.isArray(args)) valid.push({ id: c.id, name: c.name, args: args as Record<string, unknown>, type: "tool_call" });
+      else invalid.push({ id: c.id, name: c.name, args: c.arguments, error: "not a JSON object", type: "invalid_tool_call" });
     }
+    const message = new AIMessage({
+      content: r.content ?? "", tool_calls: valid, invalid_tool_calls: invalid,
+      usage_metadata: { input_tokens: r.tokens_in, output_tokens: r.tokens_out, total_tokens: r.tokens_in + r.tokens_out },
+      response_metadata: { model_name: r.model },
+    });
+    return { generations: [{ text: r.content ?? "", message }] };
   }
 }
 
@@ -112,16 +132,17 @@ export type ScriptStep =
   | { text: string }
   | ((messages: ChatMessage[], tools: ToolSpec[]) => ScriptStep);
 
-export class ScriptedModel implements ModelClient {
+export class ScriptedModel extends LocalChatModel {
   readonly kind = "scripted" as const;
   readonly modelId: string;
   readonly calls: { messages: ChatMessage[]; tools: string[] }[] = [];
   private steps: ScriptStep[];
   constructor(steps: ScriptStep[], modelId = "scripted-test") {
+    super();
     this.steps = [...steps];
     this.modelId = modelId;
   }
-  async call(messages: ChatMessage[], tools: ToolSpec[]): Promise<ModelReply> {
+  protected respond(messages: ChatMessage[], tools: ToolSpec[]): ModelReply {
     this.calls.push({ messages: structuredClone(messages), tools: tools.map((t) => t.name) });
     let step = this.steps.shift() ?? { text: "انتهيت." };
     while (typeof step === "function") step = step(messages, tools);
@@ -147,11 +168,11 @@ function lastToolResult(messages: ChatMessage[], name: string): any | null {
 
 const truthy = (v: unknown) => v === 1 || v === "نعم" || v === "yes" || v === "true";
 
-export class DemoModel implements ModelClient {
+export class DemoModel extends LocalChatModel {
   readonly kind = "demo" as const;
   readonly modelId = "demo-rules-v1";
   private n = 0;
-  async call(messages: ChatMessage[], tools: ToolSpec[]): Promise<ModelReply> {
+  protected respond(messages: ChatMessage[], tools: ToolSpec[]): ModelReply {
     const names = tools.map((t) => t.name);
     const reply = (calls: { name: string; args: unknown }[], text: string | null = null): ModelReply => ({
       content: text, tool_calls: calls.map((c, i) => ({ id: `demo${++this.n}_${i}`, name: c.name, arguments: JSON.stringify(c.args) })),
