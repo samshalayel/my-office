@@ -24,9 +24,16 @@ const [cmd, ...rest] = process.argv.slice(2);
 const flag = (name: string) => rest.find((a) => a.startsWith(`--${name}=`))?.split("=")[1];
 const has = (name: string) => rest.includes(`--${name}`);
 
+/** سؤال بإدخال مخفي (كلمة السر لا تظهر على الشاشة ولا تبقى في سجل الطرفية) */
 async function ask(q: string): Promise<string> {
-  const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
-  return new Promise((r) => rl.question(q, (a) => { rl.close(); r(a); }));
+  const rl = readline.createInterface({ input: process.stdin, output: process.stdout, terminal: true });
+  let muted = false;
+  const out = rl as unknown as { _writeToOutput: (s: string) => void; output: NodeJS.WriteStream };
+  out._writeToOutput = (s: string) => { if (!muted || s.includes("\n") || s.includes("\r\n")) out.output.write(muted ? "\n" : s); };
+  return new Promise((r) => {
+    rl.question(q, (a) => { rl.close(); r(a); });
+    muted = true;
+  });
 }
 
 async function main() {

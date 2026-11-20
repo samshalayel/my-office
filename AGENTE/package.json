@@ -4,7 +4,9 @@
   "private": true,
   "description": "AGENTE — توقع الخدج القادمين لحضانة المشفى: وكيل واحد بأدوات، والإنسان يقرر (Seesaw Agentic S4)",
   "type": "module",
-  "engines": { "node": ">=22.18" },
+  "engines": {
+    "node": ">=22.18"
+  },
   "scripts": {
     "start": "node --no-warnings=ExperimentalWarning scripts/cli.ts serve",
     "cycle": "node --no-warnings=ExperimentalWarning scripts/cli.ts cycle",
@@ -13,11 +15,18 @@
     "backup": "node --no-warnings=ExperimentalWarning scripts/cli.ts backup",
     "restore": "node --no-warnings=ExperimentalWarning scripts/cli.ts restore",
     "set-password": "node --no-warnings=ExperimentalWarning scripts/cli.ts set-password",
+    "demo-data": "node --no-warnings=ExperimentalWarning scripts/cli.ts demo-data",
     "typecheck": "tsc --noEmit -p .",
     "test": "node --no-warnings=ExperimentalWarning --test --test-concurrency=1 tests/*.test.ts"
   },
   "devDependencies": {
     "@types/node": "22.19.1",
     "typescript": "5.9.3"
+  },
+  "dependencies": {
+    "@langchain/core": "1.3.5",
+    "@langchain/langgraph": "1.7.0",
+    "@langchain/openai": "1.8.0",
+    "zod": "4.6.6"
   }
 }
