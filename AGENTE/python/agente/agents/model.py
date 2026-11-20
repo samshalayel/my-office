@@ -93,9 +93,15 @@ class OpenAICompatibleModel:
                            f"مفتاح النموذج غير مضبوط على الخادم (متغير البيئة {cfg['model']['api_key_env']}).")
 
         def make(model: str) -> Any:
+            # نماذج reasoning (gpt-5 غير chat، وo1/o3/o4) تقبل temperature=1 فقط، وتفكيرها يُحسب من سقف المخرجات.
+            # LangChain يعالج ذلك حين يبدأ الاسم بـ gpt-5 فقط — لا مع بادئة المزوّد (openai/gpt-5-mini على OpenRouter).
+            bare = model.lower().rsplit("/", 1)[-1]
+            reasoning = (bare.startswith("gpt-5") and "chat" not in bare) or bool(re.match(r"o[134](?:-|$)", bare))
+            extra: dict[str, Any] = {} if reasoning else {"temperature": cfg["model"]["temperature"]}
+            max_out = max(cfg["model"]["max_output_tokens"], 8000) if reasoning else cfg["model"]["max_output_tokens"]
             return ChatOpenAI(
                 model=model, api_key=key, base_url=re.sub(r"/+$", "", cfg["model"]["base_url"]) or None,
-                temperature=cfg["model"]["temperature"], max_completion_tokens=cfg["model"]["max_output_tokens"],
+                **extra, max_completion_tokens=max_out,
                 max_retries=1, timeout=cfg["caps"]["model_timeout_s"] + 5, use_responses_api=False,  # المهلة الملزمة: with_timeout في عقدة agent
             ).bind_tools([{"type": "function", "function": t} for t in tools])
 

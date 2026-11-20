@@ -146,3 +146,27 @@ def test_live_model_call_is_aborted_at_the_timeout(monkeypatch):
         assert len(hits) == 1, "no retry after the timeout"
     finally:
         srv.shutdown()
+
+
+def test_reasoning_models_get_no_temperature_even_with_provider_prefix(monkeypatch):
+    """gpt-5 mini عبر OpenRouter (openai/gpt-5-mini): يرفض temperature≠1 — لا تُرسل، وسقف المخرجات يتسع للتفكير."""
+    from langchain_core.messages import HumanMessage
+
+    from agente.agents.model import OpenAICompatibleModel
+
+    monkeypatch.setenv("AGENTE_MODEL_API_KEY", KEY)
+    monkeypatch.setenv("NO_PROXY", "127.0.0.1,localhost")
+    monkeypatch.setenv("no_proxy", "127.0.0.1,localhost")
+    spec = {"name": "noop", "description": "x", "parameters": {"type": "object", "properties": {}}}
+    for name, reasoning in (("openai/gpt-5-mini", True), ("o4-mini", True), ("openai/gpt-4o-mini", False), ("openai/gpt-5-chat", False)):
+        mock = MockOpenAI()
+        mock.script = [(200, {"role": "assistant", "content": "ok"})]
+        try:
+            app = make_app(overrides={"model": {"provider": "openai_compatible", "base_url": mock.url, "model": name, "fallback_model": ""}})
+            bound = OpenAICompatibleModel(app.cfg).with_tools([spec])
+            asyncio.run(bound.ainvoke([HumanMessage("hi")]))
+            body = mock.requests[0]
+            assert ("temperature" in body) is (not reasoning), (name, body.get("temperature"))
+            assert body["max_completion_tokens"] == (8000 if reasoning else app.cfg["model"]["max_output_tokens"]), name
+        finally:
+            mock.server.shutdown()
