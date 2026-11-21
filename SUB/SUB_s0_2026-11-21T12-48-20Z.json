@@ -57,7 +57,7 @@
       "data": {
         "label": "S0 Gate — Problem Lock",
         "description": "بوابة قفل المشكلة — تراجعها صاحبة القرار: تعتمد الحزمة، تحسم DEC-1، وتحدد عتبات SC-1..SC-3، ثم تعتمد أو ترفض مع ملاحظة",
-        "gateStatus": "pending"
+        "gateStatus": "approved"
       }
     }
   ],
