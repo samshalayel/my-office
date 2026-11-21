@@ -1,0 +1,11 @@
+# بيانات المشفى والتشغيل — لا تدخل الريبو أبداً (DEC-14 / HR-5)
+data/
+backups/
+evals/reports/
+# إعدادات الخادم المحلية
+config/settings.local.json
+# بيئة Python
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
